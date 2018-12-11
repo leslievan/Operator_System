@@ -1,4 +1,4 @@
-# Install script for directory: /home/leslie/workplace/Operator_System/exp3/exp3_2
+# Install script for directory: /home/leslie/workplace/Operator_System/exp3/exp3_3
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/leslie/workplace/Operator_System/exp3/exp3_2/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/leslie/workplace/Operator_System/exp3/exp3_3/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/leslie/workplace/Compiler_Principles/exp3_2/main.c
+/home/leslie/workplace/Operator_System/exp3/exp3_2/main.c
 stdio.h
 -
 stdlib.h
