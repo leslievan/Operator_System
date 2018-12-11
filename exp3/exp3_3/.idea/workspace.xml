@@ -12,25 +12,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8f855121-0106-4120-b222-dfc9a8ea4b47" name="Default Changelist" comment="Communicate by message queue between a receiver and two senders.">
-      <change afterPath="$PROJECT_DIR$/../exp3_2/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/CMakeLists.txt" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../exp3_4/common.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeCache.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/CMakeDirectoryInformation.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/CMakeDirectoryInformation.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/CMakeOutput.log" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/CMakeOutput.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/Makefile.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/Makefile.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/Makefile2" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/Makefile2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/TargetDirectories.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/TargetDirectories.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/clion-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/clion-log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/C.includecache" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/C.includecache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/DependInfo.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/DependInfo.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/build.make" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/build.make" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/depend.internal" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/depend.internal" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/main.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/CMakeFiles/exp3_2.dir/main.c.o" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/cmake_install.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/exp3_2" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/exp3_2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/exp3_2.cbp" beforeDir="false" afterPath="$PROJECT_DIR$/../exp3_2/cmake-build-debug/exp3_2.cbp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/receiver.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../exp3_4/sender.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,6 +35,7 @@
     <session id="-1825990249">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
+          <entry key="project.closed" value="1" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.opened" value="1" />
         </counts>
@@ -78,7 +70,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="135">
@@ -90,8 +82,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/common.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1220">
-              <caret line="46" column="49" selection-start-line="46" selection-start-column="49" selection-end-line="46" selection-end-column="49" />
+            <state relative-caret-position="918">
+              <caret line="34" column="23" selection-start-line="34" selection-start-column="23" selection-end-line="34" selection-end-column="23" />
               <folding>
                 <element signature="e#90#108#0" expanded="true" />
               </folding>
@@ -99,7 +91,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.c">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="761">
@@ -202,23 +194,23 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1544533049891</updated>
-      <workItem from="1544533051545" duration="646000" />
+      <workItem from="1544533051545" duration="979000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="646000" />
+    <option name="totallyTimeSpent" value="979000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="34" width="1853" height="1046" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2498615" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2498615" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Messages" visible="true" weight="0.32899022" />
+      <window_info anchor="bottom" id="Messages" weight="0.32899022" />
       <window_info anchor="bottom" id="Terminal" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
       <window_info anchor="bottom" id="CMake" />
@@ -272,27 +264,27 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/main.c">
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="761">
-          <caret line="72" column="60" selection-start-line="72" selection-start-column="60" selection-end-line="72" selection-end-column="60" />
+        <state relative-caret-position="135">
+          <caret line="5" selection-start-line="5" selection-end-line="5" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/common.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1220">
-          <caret line="46" column="49" selection-start-line="46" selection-start-column="49" selection-end-line="46" selection-end-column="49" />
+        <state relative-caret-position="918">
+          <caret line="34" column="23" selection-start-line="34" selection-start-column="23" selection-end-line="34" selection-end-column="23" />
           <folding>
             <element signature="e#90#108#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+    <entry file="file://$PROJECT_DIR$/main.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="5" selection-start-line="5" selection-end-line="5" />
+        <state relative-caret-position="761">
+          <caret line="72" column="60" selection-start-line="72" selection-start-column="60" selection-end-line="72" selection-end-column="60" />
         </state>
       </provider>
     </entry>
