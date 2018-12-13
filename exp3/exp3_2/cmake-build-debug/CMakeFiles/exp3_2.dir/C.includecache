@@ -13,6 +13,10 @@ stdlib.h
 -
 unistd.h
 -
+sys/ipc.h
+-
+sys/sem.h
+-
 errno.h
 -
 semaphore.h
