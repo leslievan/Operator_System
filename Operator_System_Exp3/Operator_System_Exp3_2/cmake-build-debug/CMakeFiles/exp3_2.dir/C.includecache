@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/leslie/workplace/Operator_System/exp3/exp3_2/main.c
+stdio.h
+-
+stdlib.h
+-
+unistd.h
+-
+sys/ipc.h
+-
+sys/sem.h
+-
+errno.h
+-
+semaphore.h
+-
+string.h
+-
+sys/types.h
+-
+sys/wait.h
+-
+fcntl.h
+-
+

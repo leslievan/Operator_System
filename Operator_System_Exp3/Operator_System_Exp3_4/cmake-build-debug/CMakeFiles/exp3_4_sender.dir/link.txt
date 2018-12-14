@@ -1,0 +1,1 @@
+/usr/bin/cc  -pthread -g   CMakeFiles/exp3_4_sender.dir/sender.c.o  -o exp3_4_sender 
