@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/Operator_System_Exp4.dir/main.c.o CMakeFiles/Operator_System_Exp4.dir/simplefs.c.o  -o Operator_System_Exp4 
