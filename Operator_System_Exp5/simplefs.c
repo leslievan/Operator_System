@@ -34,22 +34,22 @@ int start_sys(void) {
     }
 
     /** Init the first openfile entry. */
-    strcpy(openfile_list[0].filename, "root");
-    strcpy(openfile_list[0].exname, "di");
+    fcb_cpy(&openfile_list[0].open_fcb, ((fcb *) (fs_head + 5 * BLOCK_SIZE)));
     strcpy(openfile_list[0].dir, "/root");
-    openfile_list[0].attribute = 0;
-    openfile_list[0].time = ((fcb *) (fs_head + 5 * BLOCK_SIZE))->time;
-    openfile_list[0].date = ((fcb *) (fs_head + 5 * BLOCK_SIZE))->date;
-    openfile_list[0].first = ((fcb *) (fs_head + 5 * BLOCK_SIZE))->first;
-    openfile_list[0].length = ((fcb *) (fs_head + 5 * BLOCK_SIZE))->length;
     openfile_list[0].count = 1;
     openfile_list[0].fcb_state = 0;
     openfile_list[0].free = 1;
     curdir = 0;
 
     /** Init the other openfile entry. */
+    fcb *empty = (fcb *) malloc(sizeof(fcb));
+    set_fcb(empty, "\0", "\0", 0, 0, 0, 0);
     for (i = 1; i < MAX_OPENFILE; i++) {
-        set_useropen(&openfile_list[i], "\0", "\0", "\0", 0, 0, 0, 1, 0, 0);
+        fcb_cpy(&openfile_list[i].open_fcb, empty);
+        strcpy(openfile_list[i].dir, "\0");
+        openfile_list[i].free = 0;
+        openfile_list[i].count = 0;
+        openfile_list[i].fcb_state = 0;
     }
 
     /** Init global variables. */
@@ -79,10 +79,11 @@ int do_format(void) {
     int first;
 
     /** Init the boot block.(block0) */
-    block0 *block01 = (block0 *) ptr;
-    strcpy(block01->information, "Disk Size = 1MB, Block Size = 1KB, Block0 in 0, FAT0/1 in 1/3, Root Directory in 5");
-    block01->root = 5;
-    block01->start_block = block01 + BLOCK_SIZE * 7;
+    block0 *init_block = (block0 *) ptr;
+    strcpy(init_block->information,
+           "Disk Size = 1MB, Block Size = 1KB, Block0 in 0, FAT0/1 in 1/3, Root Directory in 5");
+    init_block->root = 5;
+    init_block->start_block = init_block + BLOCK_SIZE * 7;
     ptr += BLOCK_SIZE;
 
     /** Init fat0 and fat1. */
@@ -105,9 +106,9 @@ int do_format(void) {
     set_free(first, ROOT_BLOCK_NUM, 0);
 
     fcb *root = (fcb *) ptr;
-    set_fcb(root, ".", "di", 1, first, sizeof(fcb), 1);
+    set_fcb(root, ".", "di", 1, first, sizeof(fcb) * 2, 1);
     root++;
-    set_fcb(root, "..", "di", 1, first, sizeof(fcb), 1);
+    set_fcb(root, "..", "di", 1, first, sizeof(fcb) * 2, 1);
     root++;
     for (i = 2; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
         root->free = 0;
@@ -125,6 +126,11 @@ int my_cd(char **args) {
     return 1;
 }
 
+
+int do_chdir(char *pathname) {
+
+}
+
 /**
  *
  * @author
@@ -132,6 +138,14 @@ int my_cd(char **args) {
  */
 int my_mkdir(char **args) {
     return 1;
+}
+
+/**
+ *
+ * @return
+ */
+int do_mkdir() {
+
 }
 
 /**
@@ -145,10 +159,22 @@ int my_rmdir(char **args) {
 
 /**
  *
+ * @return
+ */
+int do_rmdir() {
+
+}
+
+/**
+ *
  * @author
  */
 int my_ls(char **args) {
     return 1;
+}
+
+int do_ls() {
+
 }
 
 /**
@@ -162,6 +188,10 @@ int my_create(char **args) {
     return 1;
 }
 
+int do_create() {
+
+}
+
 /**
  *
  * @author
@@ -169,6 +199,15 @@ int my_create(char **args) {
  * @author
  */
 int my_rm(char **args) {
+    return 1;
+}
+
+
+int do_rm() {
+
+}
+
+int my_open(char **args) {
     return 1;
 }
 
@@ -180,6 +219,11 @@ int my_rm(char **args) {
  * @author
  */
 int do_open(char *filename, char mode) {
+
+}
+
+
+int my_close(char **args) {
 
 }
 
@@ -349,42 +393,6 @@ int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned s
 }
 
 /**
- *
- * @param u The pointer of useropen.
- * @param filename Useropen filename.
- * @param exname Useropen file extensions name.
- * @param attr Useropen file attribute.
- * @param first Useropen starting block number.
- * @param length Useropen file length.
- * @param count Useropen file R/W cursor location.
- * @param fstate FCB state.
- * @param ffree 1 when file occupied, else 0.
- * @author Leslie Van
- */
-int set_useropen(useropen *u, char *filename, char *exname, char *dir, unsigned char attr, unsigned short first,
-                 unsigned long length, int count, char fstate, char ffree) {
-    time_t *now = (time_t) malloc(sizeof(time_t));
-    struct tm *timeinfo;
-    time(now);
-    timeinfo = localtime(now);
-
-    strcpy(u->filename, filename);
-    strcpy(u->exname, exname);
-    strcpy(u->dir, dir);
-    u->attribute = attr;
-    u->time = get_time(timeinfo);
-    u->date = get_date(timeinfo);
-    u->first = first;
-    u->length = length;
-    u->count = count;
-    u->fcb_state = fstate;
-    u->free = ffree;
-
-    free(now);
-    return 0;
-}
-
-/**
  * Translate ISO time to short time.
  * @param timeinfo Current time structure.
  * @return Time number after translation.
@@ -418,4 +426,21 @@ unsigned short get_date(struct tm *timeinfo) {
     result = (year << 9) + (mon << 5) + day;
 
     return result;
+}
+
+/**
+ * Copy a fcb.
+ * @param dest Destination fcb.
+ * @param src Source fcb.
+ */
+int fcb_cpy(fcb *dest, fcb *src) {
+    strcpy(dest->filename, src->filename);
+    strcpy(dest->exname, src->exname);
+    dest->attribute = src->attribute;
+    dest->time = src->time;
+    dest->date = src->date;
+    dest->first = src->first;
+    dest->length = src->length;
+    dest->free = src->free;
+    return 0;
 }

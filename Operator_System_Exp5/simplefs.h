@@ -57,13 +57,7 @@ typedef struct FAT {
  */
 typedef struct USEROPEN {
     /** FCB. */
-    char filename[8];
-    char exname[3];
-    unsigned char attribute;
-    unsigned short time;
-    unsigned short date;
-    unsigned short first;
-    unsigned long length;
+    fcb open_fcb;
     /** Current state. */
     char dir[80];
     int count;
@@ -87,17 +81,33 @@ int do_format(void);
 
 int my_cd(char **args);
 
+int do_chdir(char *pathname);
+
 int my_mkdir(char **args);
+
+int do_mkdir();
 
 int my_rmdir(char **args);
 
+int do_rmdir();
+
 int my_ls(char **args);
+
+int do_ls();
 
 int my_create(char **args);
 
+int do_create();
+
 int my_rm(char **args);
 
+int do_rm();
+
+int my_open(char **args);
+
 int do_open(char *filename, char mode);
+
+int my_close(char **args);
 
 int do_close(int fd);
 
@@ -118,10 +128,9 @@ int set_free(int first, int length, int mode);
 int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned short first, unsigned long length,
             char ffree);
 
-int set_useropen(useropen *u, char *filename, char *exname, char *dir, unsigned char attr, unsigned short first,
-                 unsigned long length, int count, char fstate, char ffree);
-
 unsigned short get_time(struct tm *timeinfo);
 
 unsigned short get_date(struct tm *timeinfo);
+
+int fcb_cpy(fcb *dest, fcb *src);
 #endif //OPERATOR_SYSTEM_EXP4_SIMPLEFS_H

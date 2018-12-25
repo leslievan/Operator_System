@@ -25,7 +25,9 @@ char *builtin_str[] = {
         "rm",
         "write",
         "read",
-        "exit_sys"
+        "exit",
+        "open",
+        "close"
 };
 
 int (*builtin_func[])(char **) = {
@@ -38,7 +40,9 @@ int (*builtin_func[])(char **) = {
         &my_rm,
         &my_write,
         &my_read,
-        &my_exit_sys
+        &my_exit_sys,
+        &my_open,
+        &my_close
 };
 
 int csh_num_builtins(void) {
