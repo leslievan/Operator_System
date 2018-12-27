@@ -1,3 +1,0 @@
-/home/leslie/workplace/Operator_System/Operator_System_Exp5/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/leslie/workplace/Operator_System/Operator_System_Exp5/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/leslie/workplace/Operator_System/Operator_System_Exp5/cmake-build-debug/CMakeFiles/Operator_System_Exp5.dir

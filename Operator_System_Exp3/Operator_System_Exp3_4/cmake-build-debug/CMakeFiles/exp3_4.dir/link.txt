@@ -1,1 +1,0 @@
-/usr/bin/cc -g   CMakeFiles/exp3_4.dir/main.c.o  -o exp3_4 

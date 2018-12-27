@@ -1,1 +1,0 @@
-/usr/bin/cc  -pthread -g   CMakeFiles/exp3_4_receiver.dir/receiver.c.o  -o exp3_4_receiver 
