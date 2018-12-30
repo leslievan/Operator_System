@@ -9,12 +9,19 @@
 #ifndef OPERATOR_SYSTEM_EXP4_SIMPLEFS_H
 #define OPERATOR_SYSTEM_EXP4_SIMPLEFS_H
 #define BLOCK_SIZE      1024
+#define BLOCK_NUM       1024
 #define DISK_SIZE       1048576
 #define SYS_PATH        "./fsfile"
 #define END             0xffff  /**< End of the block, a flag in FAT. */
 #define FREE            0x0000  /**< Unused block, a flag in FAT. */
+#define ROOT            "/"     /**< Root directory name.*/
 #define ROOT_BLOCK_NUM  2       /**< Block of the initial root directory. */
 #define MAX_OPENFILE    10      /**< Max files to open at the same time. */
+#define NAMELENGTH      13
+#define PATHLENGTH      128
+#define DELIM           "/"
+#define FOLDER_COLOR    "\e[1;32m"
+#define DEFAULT_COLOR   "\e[0m"
 
 /**
  * @brief Store virtual disk information.
@@ -81,7 +88,9 @@ int do_format(void);
 
 int my_cd(char **args);
 
-int do_chdir(char *pathname);
+int do_chdir(int fd);
+
+int my_pwd(char **args);
 
 int my_mkdir(char **args);
 
@@ -93,11 +102,11 @@ int do_rmdir();
 
 int my_ls(char **args);
 
-int do_ls();
+void do_ls(int first, char mode);
 
 int my_create(char **args);
 
-int do_create();
+int do_create(const char *filename);
 
 int my_rm(char **args);
 
@@ -123,7 +132,7 @@ int my_exit_sys();
 
 int get_free(int count);
 
-int set_free(int first, int length, int mode);
+int set_free(unsigned short first, unsigned short lengt, int mode);
 
 int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned short first, unsigned long length,
             char ffree);
@@ -133,4 +142,15 @@ unsigned short get_time(struct tm *timeinfo);
 unsigned short get_date(struct tm *timeinfo);
 
 int fcb_cpy(fcb *dest, fcb *src);
+
+int get_abspath(char *abspath, const char *relpath);
+
+int get_useropen();
+
+fcb *find_fcb_r(char *token, int root);
+
+fcb *find_fcb(const char *path);
+
+void get_fullname(char *fullname, fcb *fcb1);
+
 #endif //OPERATOR_SYSTEM_EXP4_SIMPLEFS_H

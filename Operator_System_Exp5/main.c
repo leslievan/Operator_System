@@ -27,7 +27,8 @@ char *builtin_str[] = {
         "read",
         "exit",
         "open",
-        "close"
+        "close",
+        "pwd"
 };
 
 int (*builtin_func[])(char **) = {
@@ -42,7 +43,8 @@ int (*builtin_func[])(char **) = {
         &my_read,
         &my_exit_sys,
         &my_open,
-        &my_close
+        &my_close,
+        &my_pwd
 };
 
 int csh_num_builtins(void) {
@@ -160,7 +162,7 @@ void csh_loop(void)
     int status;
 
     do {
-        printf("> ");
+        printf("%s > ", current_dir);
         line = csh_read_line();
         args = csh_split_line(line);
         status = csh_execute(args);
