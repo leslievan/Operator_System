@@ -17,7 +17,7 @@
 #define ROOT            "/"     /**< Root directory name.*/
 #define ROOT_BLOCK_NUM  2       /**< Block of the initial root directory. */
 #define MAX_OPENFILE    10      /**< Max files to open at the same time. */
-#define NAMELENGTH      13
+#define NAMELENGTH      24
 #define PATHLENGTH      128
 #define DELIM           "/"
 #define FOLDER_COLOR    "\e[1;32m"
@@ -88,13 +88,13 @@ int do_format(void);
 
 int my_cd(char **args);
 
-int do_chdir(int fd);
+void do_chdir(int fd);
 
 int my_pwd(char **args);
 
 int my_mkdir(char **args);
 
-int do_mkdir();
+int do_mkdir(char *dirname);
 
 int my_rmdir(char **args);
 
@@ -106,7 +106,7 @@ void do_ls(int first, char mode);
 
 int my_create(char **args);
 
-int do_create(const char *filename);
+int do_create(const char *path);
 
 int my_rm(char **args);
 
@@ -114,7 +114,7 @@ int do_rm();
 
 int my_open(char **args);
 
-int do_open(char *filename, char mode);
+int do_open(char *filename);
 
 int my_close(char **args);
 
@@ -132,7 +132,7 @@ int my_exit_sys();
 
 int get_free(int count);
 
-int set_free(unsigned short first, unsigned short lengt, int mode);
+int set_free(unsigned short first, unsigned short length, int mode);
 
 int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned short first, unsigned long length,
             char ffree);
@@ -147,9 +147,11 @@ int get_abspath(char *abspath, const char *relpath);
 
 int get_useropen();
 
+fcb *find_fcb(const char *path);
+
 fcb *find_fcb_r(char *token, int root);
 
-fcb *find_fcb(const char *path);
+void init_folder(int first, int second);
 
 void get_fullname(char *fullname, fcb *fcb1);
 

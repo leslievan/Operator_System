@@ -34,7 +34,7 @@ int start_sys(void) {
         do_format();
     }
 
-    /** Init the first openfile entry. */
+    /**< Init the first openfile entry. */
     fcb_cpy(&openfile_list[0].open_fcb, ((fcb *) (fs_head + 5 * BLOCK_SIZE)));
     strcpy(openfile_list[0].dir, ROOT);
     openfile_list[0].count = 0;
@@ -42,7 +42,7 @@ int start_sys(void) {
     openfile_list[0].free = 1;
     curdir = 0;
 
-    /** Init the other openfile entry. */
+    /**< Init the other openfile entry. */
     fcb *empty = (fcb *) malloc(sizeof(fcb));
     set_fcb(empty, "\0", "\0", 0, 0, 0, 0);
     for (i = 1; i < MAX_OPENFILE; i++) {
@@ -53,7 +53,7 @@ int start_sys(void) {
         openfile_list[i].fcb_state = 0;
     }
 
-    /** Init global variables. */
+    /**< Init global variables. */
     strcpy(current_dir, openfile_list[curdir].dir);
     start = ((block0 *) fs_head)->start_block;
     free(empty);
@@ -104,10 +104,10 @@ int my_format(char **args) {
 int do_format(void) {
     unsigned char *ptr = fs_head;
     int i;
-    int first;
+    int first, second;
     FILE *fp;
 
-    /** Init the boot block(block0). */
+    /**< Init the boot block(block0). */
     block0 *init_block = (block0 *) ptr;
     strcpy(init_block->information,
            "Disk Size = 1MB, Block Size = 1KB, Block0 in 0, FAT0/1 in 1/3, Root Directory in 5");
@@ -115,50 +115,42 @@ int do_format(void) {
     init_block->start_block = init_block + BLOCK_SIZE * 7;
     ptr += BLOCK_SIZE;
 
-    /** Init FAT0/1. */
-    set_free(0, BLOCK_NUM, 1);
+    /**< Init FAT0/1. */
+    set_free(0, 0, 2);
 
-    /** Allocate 5 blocks to one block0(1) and two fat(2). */
+    /**< Allocate 5 blocks to one block0(1) and two fat(2). */
     set_free(get_free(1), 1, 0);
     set_free(get_free(2), 2, 0);
     set_free(get_free(2), 2, 0);
 
     ptr += BLOCK_SIZE * 4;
 
-    /** 2 blocks to root directory. */
+    /**< 2 blocks to root directory. */
+    fcb *root = (fcb *) ptr;
     first = get_free(ROOT_BLOCK_NUM);
     set_free(first, ROOT_BLOCK_NUM, 0);
-
-    fcb *root = (fcb *) ptr;
     set_fcb(root, ".", "di", 0, first, sizeof(fcb) * 4, 1);
     root++;
     set_fcb(root, "..", "di", 0, first, sizeof(fcb) * 4, 1);
     root++;
 
-    /** Create test file and test folder.(delete after test) */
-    first = get_free(1);
-    set_free(first, 1, 0);
-    set_fcb(root, "file", "txt", 1, first, sizeof(fcb) * 4, 1);
+    /**< Create test file and test folder.(delete after test) */
+    second = get_free(1);
+    set_free(second, 1, 0);
+    set_fcb(root, "tmp", "txt", 1, second, 16, 1);
     root++;
-    first = get_free(1);
-    set_free(first, 1, 0);
-    set_fcb(root, "folder", "di", 0, first, sizeof(fcb) * 4, 1);
+    second = get_free(1);
+    set_free(second, 1, 0);
+    set_fcb(root, "fold", "di", 0, second, sizeof(fcb) * 2, 1);
+    init_folder(first, second);
     root++;
-    fcb *folder = fs_head + BLOCK_SIZE * first;
-    set_fcb(folder, ".", "di", 0, first, sizeof(fcb) * 3, 1);
-    folder++;
-    set_fcb(folder, "..", "di", 0, first, sizeof(fcb) * 3, 1);
-    folder++;
-    set_fcb(folder, "test", "di", 0, first, sizeof(fcb) * 3, 1);
 
     // for (i = 2; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
     for (i = 4; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
         root->free = 0;
     }
 
-    set_free(0, BLOCK_NUM, 1);
-
-    /** Write back. */
+    /**< Write back. */
     fp = fopen(SYS_PATH, "w");
     fwrite(fs_head, DISK_SIZE, 1, fp);
     fclose(fp);
@@ -170,13 +162,50 @@ int do_format(void) {
  * @param args
  */
 int my_cd(char **args) {
+    int i;
+    int fd;
+    fcb *dir;
+
+    /**< Check argument count. */
+    for (i = 0; args[i] != NULL; i++);
+    if (i != 2) {
+        fprintf(stderr, "csh: expected argument to \"format\"\n");
+        return 1;
+    }
+
+    /**< Check argument value. */
+    dir = find_fcb(args[1]);
+    if (dir == NULL || dir->attribute == 1) {
+        fprintf(stderr, "csh: No such folder\n");
+        return 1;
+    }
+
+    /**< Check if the folder fcb exist in openfile_list. */
+    for (i = 0; i < 10; i++) {
+        if (!strcmp(dir->filename, openfile_list[i].open_fcb.filename) &&
+            dir->first == openfile_list[i].open_fcb.first) {
+            /**< Folder is open. */
+            do_chdir(i);
+            return 1;
+        }
+    }
+
+    /**< Folder is close, then find a useropen entry. */
+    if (get_useropen() == -1) {
+        fprintf(stderr, "csh: Cannot open more file, please close one and try it again\n");
+        return 1;
+    }
+
+    /**< Folder is close, open it and change current directory. */
+    fd = do_open(args[1]);
+    do_chdir(fd);
+
     return 1;
 }
 
 
-int do_chdir(int fd) {
+void do_chdir(int fd) {
     curdir = fd;
-    return 0;
 }
 
 int my_pwd(char **args) {
@@ -190,6 +219,24 @@ int my_pwd(char **args) {
  * @param args
  */
 int my_mkdir(char **args) {
+    int i;
+    fcb *dir;
+
+    /**< Check argument count. */
+    for (i = 0; args[i] != NULL; i++);
+    if (i != 2) {
+        fprintf(stderr, "csh: expected argument to \"format\"\n");
+        return 1;
+    }
+
+    /**< Check argument value. */
+    dir = find_fcb(args[1]);
+    if (dir != NULL) {
+        fprintf(stderr, "csh: cannot create directory %s: File exists\n", args[1]);
+        return 1;
+    }
+
+    do_mkdir(args[1]);
     return 1;
 }
 
@@ -197,8 +244,39 @@ int my_mkdir(char **args) {
  *
  * @return
  */
-int do_mkdir() {
+int do_mkdir(char *dirname) {
+    int second = get_free(1);
+    /**< Check for free space. */
+    if (second == -1) {
+        fprintf(stderr, "csh: No more space\n");
+        return -1;
+    }
 
+    int flag = 0;
+    int i;
+    fcb *cur = (fcb *) (fs_head + BLOCK_SIZE * openfile_list[curdir].open_fcb.first);
+
+    /**< Check for free fcb. */
+    for (i = 0; i < BLOCK_SIZE / sizeof(fcb); i++, cur++) {
+        if (cur->free == 0) {
+            flag = 1;
+            break;
+        }
+    }
+    if (!flag) {
+        fprintf(stderr, "csh: Cannot create more file in this folder\n");
+        return -1;
+    }
+
+    /**< Update par folder fcb. */
+    openfile_list[curdir].fcb_state = 1;
+    openfile_list[curdir].open_fcb.length += sizeof(fcb);
+
+    /**< Init cur folder. */
+    set_fcb(cur, dirname, "di", 0, second, sizeof(fcb) * 2, 1);
+    init_folder(openfile_list[curdir].open_fcb.first, second);
+
+    return 0;
 }
 
 /**
@@ -207,6 +285,15 @@ int do_mkdir() {
  * @param args
  */
 int my_rmdir(char **args) {
+    int i;
+    set_free(0, 0, 2);
+    fat *fat0 = (fat *) (fs_head + BLOCK_SIZE);
+    for (i = 0; i < BLOCK_NUM; i++) {
+        printf("%d\t", fat0->id);
+        if ((i + 1) % 10 == 0) {
+            printf("\n");
+        }
+    }
     return 1;
 }
 
@@ -249,15 +336,28 @@ int my_ls(char **args) {
 }
 
 void do_ls(int first, char mode) {
+    int i, count, length = BLOCK_SIZE;
     char fullname[NAMELENGTH];
-    int count;
     fcb *root = (fcb *) (fs_head + BLOCK_SIZE * first);
+    block0 *init_block = (block0 *) fs_head;
+    if (first == init_block->root) {
+        length = ROOT_BLOCK_NUM * BLOCK_SIZE;
+    }
 
-    for (count = 1; root->free != 0; root++, count++) {
+    for (i = 0, count = 1; i < length / sizeof(fcb); i++, root++) {
+        /**< Check if the fcb is used. */
+        if (root->free == 0) {
+            continue;
+        }
+
         if (root->attribute == 0) {
-            printf("%s", FOLDER_COLOR);
-            printf("%s\t", root->filename);
-            printf("%s", DEFAULT_COLOR);
+            if (mode == 'n') {
+                printf("%s", FOLDER_COLOR);
+                printf("%s\t", root->filename);
+                printf("%s", DEFAULT_COLOR);
+            } else {
+                printf("%s", FOLDER_COLOR);
+            }
         } else {
             get_fullname(fullname, root);
             printf("%s\t", fullname);
@@ -265,6 +365,7 @@ void do_ls(int first, char mode) {
         if (count % 5 == 0) {
             printf("\n");
         }
+        count++;
     }
     printf("\n");
 }
@@ -277,44 +378,67 @@ void do_ls(int first, char mode) {
  * @author
  */
 int my_create(char **args) {
-    char filename[NAMELENGTH];
+    int i;
+    char path[PATHLENGTH];
 
-    if (args[1] != NULL) {
-        strcpy(filename, args[1]);
-    } else {
+    /**< Check argument count. */
+    for (i = 0; args[i] != NULL; i++);
+    if (i != 2) {
         fprintf(stderr, "csh: expected argument to \"create\"\n");
         return 1;
     }
-    do_create(filename);
+
+    get_abspath(path, args[1]);
+    if (find_fcb(path) != NULL) {
+        fprintf(stderr, "csh: file has been exist, create failed\n");
+        return 1;
+    }
+
+    do_create(path);
 
     return 1;
 }
 
-int do_create(const char *filename) {
-    /** Allocate space. */
+int do_create(const char *path) {
+    char par[PATHLENGTH];
+    char fullname[NAMELENGTH];
+    char fname[16], exname[8];
+    char *token, *end;
     int first = get_free(1);
+    fcb *dir;
+
+    /**< Check for free space. */
     if (first == -1) {
-        /**< No enough space. */
-        fprintf(stderr, "csh: no enough space to create file\n");
+        fprintf(stderr, "csh: No more space\n");
         return -1;
     }
 
+    memset(par, '\0', PATHLENGTH);
+    memset(fullname, '\0', NAMELENGTH);
+    memset(fname, '\0', 8);
+    memset(exname, '\0', 3);
     set_free(first, 1, 0);
-    char str[NAMELENGTH];
-    char fname[8], exname[3];
-    char *token;
 
-    /** Find an empty fcb. */
-    fcb *cur = find_fcb("./");
-    for (; cur->free == 1; cur++);
-
-    /** Split name and initial variables. */
-    strcpy(str, filename);
-    token = strtok(str, ".");
+    /**< Split name and initial variables. */
+    end = strrchr(path, DELIM);
+    if (end < path) {
+        strcpy(par, "/");
+        strcpy(fullname, path + 1);
+    } else {
+        strncpy(par, path, end - path);
+        strcpy(fullname, end + 1);
+    }
+    token = strtok(fullname, ".");
     strcpy(fname, token);
     token = strtok(NULL, ".");
     strcpy(exname, token);
-    set_fcb(cur, fname, exname, 1, first, 0, 1);
+
+    /**< Find an empty fcb. */
+    dir = (fcb *) (fs_head + BLOCK_SIZE * find_fcb(par)->first);
+    for (; dir->free == 1; dir++);
+
+    /**< Set fcb. */
+    set_fcb(dir, fname, exname, 1, first, 0, 1);
 
     return 0;
 }
@@ -326,6 +450,16 @@ int do_create(const char *filename) {
  * @author
  */
 int my_rm(char **args) {
+    char filename[NAMELENGTH];
+
+    if (args[1] != NULL) {
+        strcpy(filename, args[1]);
+    } else {
+        fprintf(stderr, "csh: expected argument to \"create\"\n");
+        return 1;
+    }
+    do_create(filename);
+
     return 1;
 }
 
@@ -341,11 +475,10 @@ int my_open(char **args) {
 /**
  *
  * @param filename
- * @param mode
  * @return
  * @author
  */
-int do_open(char *filename, char mode) {
+int do_open(char *filename) {
 
 }
 
@@ -395,6 +528,15 @@ int do_write(int fd, char *text, int len, char mode) {
  * @author
  */
 int my_read(char **args) {
+    int i;
+    char path[PATHLENGTH];
+    char relpath[3][PATHLENGTH] = {"./file.txt", "../folder", "."};
+    fcb *ptr;
+
+    for (i = 0; i < 3; i++) {
+        ptr = find_fcb(relpath[i]);
+        printf("%s\t%d\n", relpath[i], ptr->first);
+    }
     return 1;
 }
 
@@ -462,36 +604,38 @@ int get_free(int count) {
 /**
  * Change value of FAT.
  * @param first The starting block number.
- * @param lengt The blocks count.
+ * @param length The blocks count.
  * @param mode 0 to allocate and 1 to set free.
  * @author Leslie Van
  */
-int set_free(unsigned short first, unsigned short lengt, int mode) {
-    unsigned char *ptr = fs_head;
-    fat *fat0 = (fat *) (ptr + BLOCK_SIZE);
-    fat *fat1 = (fat *) (ptr + BLOCK_SIZE * 3);
+int set_free(unsigned short first, unsigned short length, int mode) {
+    fat *fat0 = (fat *) (fs_head + BLOCK_SIZE);
+    fat *fat1 = (fat *) (fs_head + BLOCK_SIZE * 3);
     int i;
+    int offset;
 
     for (i = 0; i < first; i++, fat0++, fat1++);
 
     if (mode == 1) {
-        if (lengt == 0) {
-            /**< Reclaim space. */
-            while (fat0->id != END) {
-                fat0->id = FREE;
-                fat1->id = FREE;
-            }
+        /**< Reclaim space. */
+        while (fat0->id != END) {
+            offset = fat0->id;
             fat0->id = FREE;
             fat1->id = FREE;
-        } else {
-            for (i = 0; i < lengt; i++, fat0++, fat1++) {
-                fat0->id = FREE;
-                fat1->id = FREE;
-            }
+            fat0 += offset;
+            fat1 += offset;
+        }
+        fat0->id = FREE;
+        fat1->id = FREE;
+    } else if (mode == 2) {
+        /**< Format FAT */
+        for (i = 0; i < BLOCK_NUM; i++, fat0++, fat1++) {
+            fat0->id = FREE;
+            fat1->id = FREE;
         }
     } else {
         /**< Allocate consecutive space. */
-        for (; i < first + lengt - 1; i++, fat0++, fat1++) {
+        for (; i < first + length - 1; i++, fat0++, fat1++) {
             fat0->id = first + 1;
             fat1->id = first + 1;
         }
@@ -515,17 +659,15 @@ int set_free(unsigned short first, unsigned short lengt, int mode) {
  */
 int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned short first, unsigned long length,
             char ffree) {
-    int i = 0;
-    char empty[16] = "\0";
     time_t *now = (time_t *) malloc(sizeof(time_t));
     struct tm *timeinfo;
     time(now);
     timeinfo = localtime(now);
 
-    strncpy(f->filename, empty, 8);
-    strncpy(f->exname, empty, 3);
-    strcpy(f->filename, filename);
-    strcpy(f->exname, exname);
+    memset(f->filename, 0, 8);
+    memset(f->exname, 0, 3);
+    strncpy(f->filename, filename, 8);
+    strncpy(f->exname, exname, 3);
     f->attribute = attr;
     f->time = get_time(timeinfo);
     f->date = get_date(timeinfo);
@@ -598,6 +740,12 @@ int fcb_cpy(fcb *dest, fcb *src) {
  * @return 0.
  */
 int get_abspath(char *abspath, const char *relpath) {
+    /**< If relpath is abspath. */
+    if (!strcmp(relpath, DELIM) || relpath[0] == '/') {
+        strcpy(abspath, relpath);
+        return 0;
+    }
+
     char str[PATHLENGTH];
     char *token;
     int i;
@@ -610,38 +758,32 @@ int get_abspath(char *abspath, const char *relpath) {
     strcpy(str, relpath);
     token = strtok(str, DELIM);
 
-    /** Root directory. */
-    if (token == NULL) {
-        return 0;
-    }
-
-    if (!strcmp(token, "..")) {
-        /** par folder */
-        n = strlen(openfile_list[curdir].open_fcb.filename);
-        for (i = 0; i < strlen(current_dir) - n + 1; i++) {
-            abspath[i] = current_dir[i];
+    /**< Process the first token. */
+    if (!strcmp(token, ".")) {
+        /**< Cur folder. */
+        if (current_dir[1] != '\0') {
+            strcpy(abspath, current_dir);
+        }
+    } else if (!strcmp(token, "..")) {
+        /**< Par folder. */
+        if (current_dir[1] != '\0') {
+            n = strlen(openfile_list[curdir].open_fcb.filename);
+            strncpy(abspath, current_dir, strlen(current_dir) - n);
         }
     } else {
-        /** cur folder */
-        if (!strcmp(token, ".")) {
-            token = strtok(NULL, DELIM);
-        }
-
-        /** avoid to double "/" when par folder is root */
-        if (strcmp(ROOT, current_dir)) {
-            strcpy(abspath, current_dir);
-        } else {
-            strcpy(abspath, "");
-        }
-
-        while (token != NULL) {
+        strcpy(abspath, current_dir);
+        if (current_dir[1] != '\0') {
             strcat(abspath, DELIM);
-            strcat(abspath, token);
-            if (strrchr(token, '.') == NULL) {
-                strcat(abspath, ".di");
-            }
-            token = strtok(NULL, DELIM);
         }
+        strcat(abspath, token);
+    }
+
+    /**< Process the other tokens. */
+    token = strtok(NULL, DELIM);
+    while (token != NULL) {
+        strcat(abspath, DELIM);
+        strcat(abspath, token);
+        token = strtok(NULL, DELIM);
     }
 
     return 0;
@@ -675,6 +817,9 @@ fcb *find_fcb_r(char *token, int first) {
     root = (fcb *) (BLOCK_SIZE * first + fs_head);
 
     for (i = 0; i < root->length / sizeof(fcb); i++, root++) {
+        if (root->free == 0) {
+            continue;
+        }
         get_fullname(fullname, root);
         if (!strcmp(token, fullname)) {
             token = strtok(NULL, DELIM);
@@ -704,16 +849,17 @@ int get_useropen() {
 }
 
 /**  */
-void init_block(fcb *fcb1) {
+void init_folder(int first, int second) {
     int i;
+    fcb *par = (fcb *) (fs_head + BLOCK_SIZE * first);
+    fcb *cur = (fcb *) (fs_head + BLOCK_SIZE * second);
 
-    fcb *root = (fcb *) (fs_head + BLOCK_NUM * fcb1->first);
-    set_fcb(root, ".", "di", 0, fcb1->first, sizeof(fcb) * 2, 1);
-    root++;
-    set_fcb(root, "..", "di", 0, fcb1->first, sizeof(fcb) * 2, 1);
-    root++;
-    for (i = 2; i < BLOCK_SIZE / sizeof(fcb); i++, root++) {
-        root->free = 0;
+    set_fcb(cur, ".", "di", 0, second, sizeof(fcb) * 2, 1);
+    cur++;
+    set_fcb(cur, "..", "di", 0, first, par->length, 1);
+    cur++;
+    for (i = 2; i < BLOCK_SIZE / sizeof(fcb); i++, cur++) {
+        cur->free = 0;
     }
 }
 
@@ -723,17 +869,15 @@ void init_block(fcb *fcb1) {
  * @param fcb1 Source fcb pointer.
  */
 void get_fullname(char *fullname, fcb *fcb1) {
-    if (fcb1 == NULL) {
-        fullname = NULL;
-        return;
-    }
-
     int i;
 
     for (i = 0; i < NAMELENGTH; i++) {
         fullname[i] = '\0';
     }
+
     strncat(fullname, fcb1->filename, 8);
-    strncat(fullname, ".", 2);
-    strncat(fullname, fcb1->exname, 3);
+    if (fcb1->attribute == 1) {
+        strncat(fullname, ".", 2);
+        strncat(fullname, fcb1->exname, 3);
+    }
 }
