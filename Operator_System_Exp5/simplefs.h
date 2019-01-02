@@ -22,6 +22,7 @@
 #define DELIM           "/"
 #define FOLDER_COLOR    "\e[1;32m"
 #define DEFAULT_COLOR   "\e[0m"
+#define WRITE_SIZE      20 * BLOCK_SIZE
 
 /**
  * @brief Store virtual disk information.
@@ -94,7 +95,7 @@ int my_pwd(char **args);
 
 int my_mkdir(char **args);
 
-int do_mkdir(char *dirname);
+int do_mkdir(const char *parpath, const char *dirname);
 
 int my_rmdir(char **args);
 
@@ -106,11 +107,11 @@ void do_ls(int first, char mode);
 
 int my_create(char **args);
 
-int do_create(const char *path);
+int do_create(const char *parpath, const char *filename);
 
 int my_rm(char **args);
 
-int do_rm();
+void do_rm(fcb *file);
 
 int my_open(char **args);
 
@@ -122,7 +123,8 @@ int do_close(int fd);
 
 int my_write(char **args);
 
-int do_write(int fd, char *text, int len, char mode);
+//int do_write(int fd, char mode);
+int do_write(int fd, int wstyle);
 
 int my_read(char **args);
 
@@ -134,7 +136,8 @@ int get_free(int count);
 
 int set_free(unsigned short first, unsigned short length, int mode);
 
-int set_fcb(fcb *f, char *filename, char *exname, unsigned char attr, unsigned short first, unsigned long length,
+int set_fcb(fcb *f, const char *filename, const char *exname, unsigned char attr, unsigned short first,
+            unsigned long length,
             char ffree);
 
 unsigned short get_time(struct tm *timeinfo);
@@ -154,5 +157,9 @@ fcb *find_fcb_r(char *token, int root);
 void init_folder(int first, int second);
 
 void get_fullname(char *fullname, fcb *fcb1);
+
+char *trans_date(char *sdate, unsigned short date);
+
+char *trans_time(char *stime, unsigned short time);
 
 #endif //OPERATOR_SYSTEM_EXP4_SIMPLEFS_H

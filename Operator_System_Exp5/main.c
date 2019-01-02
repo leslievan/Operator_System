@@ -160,6 +160,7 @@ void csh_loop(void)
     char *line;
     char **args;
     int status;
+    int te;
 
     do {
         printf("%s > ", current_dir);
