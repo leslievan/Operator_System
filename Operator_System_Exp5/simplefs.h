@@ -99,7 +99,7 @@ int do_mkdir(const char *parpath, const char *dirname);
 
 int my_rmdir(char **args);
 
-int do_rmdir();
+void do_rmdir(fcb *dir);
 
 int my_ls(char **args);
 

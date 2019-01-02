@@ -223,8 +223,6 @@ void do_chdir(int fd) {
 }
 
 int my_pwd(char **args) {
-    int i;
-
     /**< Check argument count. */
     if (args[1] != NULL) {
         fprintf(stderr, "cd: too many arguments\n");
@@ -321,13 +319,53 @@ int do_mkdir(const char *parpath, const char *dirname) {
  * @param args
  */
 int my_rmdir(char **args) {
-    int i;
-    fat *fat0 = (fat *) (fs_head + BLOCK_SIZE);
-    for (i = 0; i < 20; i++, fat0++) {
-        printf("%d\t", fat0->id);
-        if ((i + 1) % 10 == 0) {
-            printf("\n");
+    int i, j;
+    fcb *dir;
+
+    /**< Check argument count. */
+    if (args[1] == NULL) {
+        fprintf(stderr, "rmdir: missing operand\n");
+        return 1;
+    }
+
+    /**< Do remove. */
+    for (i = 1; args[i] != NULL; i++) {
+        if (!strcmp(args[i], ".") || !strcmp(args[i], "..")) {
+            fprintf(stderr, "rmdir: cannot remove %s: '.' or '..' is read only \n", args[i]);
+            return 1;
         }
+
+        if (!strcmp(args[i], "/")) {
+            fprintf(stderr, "rmdir:  Permission denied\n", args[i]);
+            return 1;
+        }
+
+        dir = find_fcb(args[i]);
+        if (dir == NULL) {
+            fprintf(stderr, "rmdir: cannot remove %s: No such folder\n", args[i]);
+            return 1;
+        }
+
+        if (dir->attribute == 1) {
+            fprintf(stderr, "rmdir: cannot remove %s: Is a directory\n", args[i]);
+            return 1;
+        }
+
+        /**< Check if the folder fcb exist in openfile_list. */
+        for (j = 0; j < 10; j++) {
+            if (openfile_list[j].free == 0) {
+                continue;
+            }
+
+            if (!strcmp(dir->filename, openfile_list[j].open_fcb.filename) &&
+                dir->first == openfile_list[j].open_fcb.first) {
+                /**< Folder is open. */
+                fprintf(stderr, "rmdir: cannot remove %s: File is open\n", args[i]);
+                return 1;
+            }
+        }
+
+        do_rmdir(dir);
     }
     return 1;
 }
@@ -337,8 +375,14 @@ int my_rmdir(char **args) {
  * @todo Implement for do_rmdir().
  * @return
  */
-int do_rmdir() {
-//    (fcb *)fs_head + BLOCK_SIZE
+void do_rmdir(fcb *dir) {
+    int first = dir->first;
+
+    dir->free = 0;
+    dir = (fcb *) (fs_head + BLOCK_SIZE * first);
+    dir->free = 0;
+    dir++;
+    dir->free = 0;
 }
 
 /**
@@ -544,7 +588,7 @@ int do_create(const char *parpath, const char *filename) {
  * @author
  */
 int my_rm(char **args) {
-    int i;
+    int i, j;
     fcb *file;
 
     /**< Check argument count. */
@@ -560,10 +604,22 @@ int my_rm(char **args) {
             fprintf(stderr, "rm: cannot remove %s: No such file\n", args[i]);
             return 1;
         }
+
         if (file->attribute == 0) {
             fprintf(stderr, "rm: cannot remove %s: Is a directory\n", args[i]);
             return 1;
         }
+
+        /**< Check if the file fcb exist in openfile_list. */
+        for (j = 0; j < 10; j++) {
+            if (!strcmp(file->filename, openfile_list[i].open_fcb.filename) &&
+                file->first == openfile_list[i].open_fcb.first) {
+                /**< Folder is open. */
+                fprintf(stderr, "rm: cannot remove %s: File is open\n", args[i]);
+                return 1;
+            }
+        }
+
         do_rm(file);
     }
 
@@ -636,6 +692,7 @@ int my_write(char **args) {
 //    fat *fat1 = (fat *) (fs_head + BLOCK_SIZE);
 
 
+
     return 1;
 }
 
@@ -647,93 +704,7 @@ int my_write(char **args) {
  */
 // int do_write(int fd, char *text, int len, char mode) {
 int do_write(int fd, int wstyle) {
-    //fat1表
 
-    fat *fat1 = (fat *) fs_head + BLOCK_SIZE;
-
-    //定义输入字符串数组，初始化
-    char text[WRITE_SIZE] = {0};
-
-
-    int write = openfile_list[fd].count;
-    openfile_list[fd].count = 0;
-    do_read(fd, openfile_list[fd].open_fcb.length, text);  //读取
-    openfile_list[fd].count = write;
-
-    int i = openfile_list[fd].open_fcb.first;
-    printf("first is %d", openfile_list[fd].open_fcb.first);
-    printf("i is %d", i);
-
-    printf("this is wstyle:%d\n", wstyle);
-    printf("Please input what you want to write\n");
-
-    //文件处理：截断写、覆盖写、追加写
-    if (wstyle == 1) {
-
-        memset(text, 0, WRITE_SIZE);
-        fgets(text, WRITE_SIZE, stdin);
-    } else if (wstyle == 2) {
-
-        fgets(&text[openfile_list[fd].count], WRITE_SIZE, stdin);
-    } else if (wstyle == 3) {
-
-        fgets(&text[openfile_list[fd].open_fcb.length], WRITE_SIZE, stdin);
-    }
-    printf("text is :%s\n", text);
-
-    //写入文件系统
-    int length = strlen(text); //需要写入的长度
-    printf("length is %d\n", length);
-    int num = length / BLOCK_SIZE + 1;
-    printf("num is %d\n", num);
-    int static_num = num;
-
-
-    while (num) {
-        printf("-----------\n");
-        printf("num is %d\n", num);
-        char buf[BLOCK_SIZE] = {0};
-        memcpy(buf, &text[(static_num - num) * BLOCK_SIZE], BLOCK_SIZE);
-        unsigned char *p = fs_head + i * BLOCK_SIZE;
-
-        memcpy(p, buf, BLOCK_SIZE);
-
-        num = num - 1;
-        if (num > 0) // 是否还有下一次循环
-        {
-            printf("i is %d\n", i);
-            fat *fat_cur = fat1 + i;
-
-            if (fat_cur->id == END)  //需要申请索引块
-            {
-                int next = 0;
-                while ((fat1 + next)->id != FREE) {
-                    next++;
-                }
-                printf("next is %d\n", next);
-                fat_cur->id = next;
-                fat_cur = fat1 + next;
-                fat_cur->id = END;
-            }
-            i = (fat1 + i)->id;
-            printf("i is %d\n", i);
-        }
-    }
-    //这时的i是刚写完的最后一个磁盘块，剩下的磁盘块可以free掉
-
-    if ((fat1 + i)->id != END) {
-        int j = (fat1 + i)->id;
-        (fat1 + i)->id = END;
-        i = j;
-        while ((fat1 + i)->id != END) {
-            int m = (fat1 + i)->id;
-            (fat1 + i)->id = FREE;
-            i = m;
-        }
-        (fat1 + i)->id = FREE;
-    }
-    openfile_list[fd].open_fcb.length = length;
-    return 0;
 }
 
 /**
@@ -744,18 +715,6 @@ int do_write(int fd, int wstyle) {
  * @author
  */
 int my_read(char **args) {
-//    int i;
-//    char path[PATHLENGTH];
-//    char relpath[3][PATHLENGTH] = {"./file.txt", "../folder", "."};
-//    fcb *ptr;
-//
-//    for (i = 0; i < 3; i++) {
-//        ptr = find_fcb(relpath[i]);
-//        printf("%s\t%d\n", relpath[i], ptr->first);
-//    }
-    char text[2048];
-    do_read(1, 16, text);
-    printf("%s", text);
     return 1;
 }
 
@@ -769,50 +728,7 @@ int my_read(char **args) {
  * @author
  */
 int do_read(int fd, int len, char *text) {
-    if (len <= 0) //想要读取0个字符
-    {
-        return 0;
-    }
 
-    fat *fat1 = (fat *) fs_head + BLOCK_SIZE; //FAT1表
-    int location = 0;//text的写入位置
-    int length;
-    int count = openfile_list[fd].count; //读写指针位置
-    //排除了id出现end的情况
-    if ((openfile_list[fd].open_fcb.length - count) >= len) //可以读取的字符多于想要读取的字符
-    {
-        length = len;  //想要读取的字符
-    } else {
-        length = openfile_list[fd].open_fcb.length - count; //只能读取这些字符
-    }
-    while (length) //需要读取的字符串个数
-    {
-        char *buf = (char *) malloc(BLOCK_SIZE); //申请空闲缓冲区
-        int count = openfile_list[fd].count; //读写指针位置
-        int logic_block_num = count / BLOCK_SIZE;//逻辑块号（起始为0）
-        int off = count % BLOCK_SIZE;//块内偏移量
-        int physics_block_num = openfile_list[fd].open_fcb.first;//文件起始物理块号（引导块号为0）
-
-        for (int i = 0; i < logic_block_num; i++)  //物理块号
-        {
-            physics_block_num = (fat1 + physics_block_num)->id; //FAT第一项为0，若为1则physics_block_num-1
-        }
-        unsigned char *p = fs_head + BLOCK_SIZE * physics_block_num; //该物理块起始地址
-        memcpy(buf, p, BLOCK_SIZE);
-
-        if ((off + length) <= BLOCK_SIZE) {
-            memcpy(&text[location], &buf[off], length);
-            openfile_list[fd].count = openfile_list[fd].count + length;
-            location += length;  //下一次写的位置
-            length = length - length;  //lenght = 0 将退出循环
-        } else {
-            memcpy(&text[location], &buf[off], BLOCK_SIZE - off);
-            openfile_list[fd].count += BLOCK_SIZE - off;
-            location += BLOCK_SIZE - off;
-            length = length - BLOCK_SIZE - off; //还剩下的想要读取的字节数
-        }
-    }
-    return location;
 }
 
 /**
