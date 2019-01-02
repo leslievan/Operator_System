@@ -6,6 +6,12 @@
  * @date    2018-12-19 to
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <stdint.h>
+
 #ifndef OPERATOR_SYSTEM_EXP4_SIMPLEFS_H
 #define OPERATOR_SYSTEM_EXP4_SIMPLEFS_H
 #define BLOCK_SIZE      1024
@@ -123,8 +129,7 @@ int do_close(int fd);
 
 int my_write(char **args);
 
-//int do_write(int fd, char mode);
-int do_write(int fd, int wstyle);
+int do_write(int fd, char *content, size_t len, int wstyle);
 
 int my_read(char **args);
 

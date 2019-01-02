@@ -6,10 +6,6 @@
  * @date    2018-12-19 to
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include "simplefs.h"
 
 
@@ -314,7 +310,6 @@ int do_mkdir(const char *parpath, const char *dirname) {
 
 /**
  *
- * @todo Implement for my_rmdir().
  * @author
  * @param args
  */
@@ -372,7 +367,6 @@ int my_rmdir(char **args) {
 
 /**
  *
- * @todo Implement for do_rmdir().
  * @return
  */
 void do_rmdir(fcb *dir) {
@@ -612,8 +606,12 @@ int my_rm(char **args) {
 
         /**< Check if the file fcb exist in openfile_list. */
         for (j = 0; j < 10; j++) {
-            if (!strcmp(file->filename, openfile_list[i].open_fcb.filename) &&
-                file->first == openfile_list[i].open_fcb.first) {
+            if (openfile_list[j].free == 0) {
+                continue;
+            }
+
+            if (!strcmp(file->filename, openfile_list[j].open_fcb.filename) &&
+                file->first == openfile_list[j].open_fcb.first) {
                 /**< Folder is open. */
                 fprintf(stderr, "rm: cannot remove %s: File is open\n", args[i]);
                 return 1;
@@ -677,50 +675,235 @@ int do_close(int fd) {
 
 /**
  *
- * @todo Implement and debug for my_write().
  * @brief
  * @param args
  * @return
  * @author
  */
 int my_write(char **args) {
-    int i;
-    for (i = 0; i < 3; i++) {
-        printf("%s\t%d\n", openfile_list[i].open_fcb.filename, openfile_list[i].open_fcb.first);
+    int i, j = 0, flag = 0;
+    int mode = 'w';
+    char c;
+    char path[PATHLENGTH];
+    char str[WRITE_SIZE];
+    fcb *file;
+
+    /**< Check for arguments count. */
+    for (i = 1; args[i] != NULL; i++) {
+        if (args[i][0] == '-') {
+            if (!strcmp(args[i], "-w")) {
+                mode = 'w';
+            } else if (!strcmp(args[i], "-c")) {
+                mode = 'c';
+            } else if (!strcmp(args[i], "-a")) {
+                mode = 'a';
+            } else {
+                fprintf(stderr, "write: wrong argument\n");
+                return 1;
+            }
+        } else {
+            flag += 1 << i;
+        }
     }
-    do_write(1, 1);
-//    fat *fat1 = (fat *) (fs_head + BLOCK_SIZE);
+    if ((flag == 0) || (flag > 4) || i > 3) {
+        fprintf(stderr, "write: wrong argument\n");
+        return 1;
+    }
 
+    /**< Check if it's a file or folder. */
+    strcpy(path, args[flag >> 1]);
+    if ((file = find_fcb(path)) == NULL) {
+        fprintf(stderr, "write: File not exists\n");
+        return 1;
+    }
+    if (file->attribute == 0) {
+        fprintf(stderr, "write: cannot access a folder\n");
+        return 1;
+    }
 
+    memset(str, '\0', WRITE_SIZE);
+    /**< Check if it's open. */
+    for (i = 0; i < 10; i++) {
+        if (openfile_list[i].free == 0) {
+            continue;
+        }
 
+        if (!strcmp(file->filename, openfile_list[i].open_fcb.filename) &&
+            file->first == openfile_list[i].open_fcb.first) {
+            /**< File is open. */
+            while (1) {
+                for (; (str[j] = getchar()) != '\n'; j++);
+                j++;
+                if ((c = getchar()) == '\n') {
+                    break;
+                } else {
+                    str[j] = c;
+                    j++;
+                }
+            }
+            str[j] = '\0';
+            printf("%s", str);
+            do_write(i, str, j + 1, mode);
+            return 1;
+        }
+    }
+
+    fprintf(stderr, "write: file is not open\n");
     return 1;
 }
 
 /**
- * @todo Debug for do_write().
  * @param fd
  * @param wstyle
  * @return
  */
-// int do_write(int fd, char *text, int len, char mode) {
-int do_write(int fd, int wstyle) {
+int do_write(int fd, char *content, size_t len, int wstyle) {
+    //fat1表
 
+    fat *fat1 = (fat *) (fs_head + BLOCK_SIZE);
+
+    //定义输入字符串数组，初始化
+    char text[WRITE_SIZE] = {0};
+
+    int write = openfile_list[fd].count;
+    openfile_list[fd].count = 0;
+    do_read(fd, openfile_list[fd].open_fcb.length, text);  //读取
+    openfile_list[fd].count = write;
+
+    int i = openfile_list[fd].open_fcb.first;
+
+    char input[WRITE_SIZE] = {0};
+    strncpy(input, content, len);
+    //文件处理：截断写、覆盖写、追加写
+    if (wstyle == 'w') {
+        memset(text, 0, WRITE_SIZE);
+        strncpy(text, input, len);
+    } else if (wstyle == 'c') {
+        strncpy(&text[openfile_list[fd].count], input, len);
+    } else if (wstyle == 'a') {
+        strncpy(&text[openfile_list[fd].open_fcb.length], input, len);
+    }
+    //写入文件系统
+    int length = strlen(text); //需要写入的长度
+    int num = length / BLOCK_SIZE + 1;
+    int static_num = num;
+
+    while (num) {
+
+        char buf[BLOCK_SIZE] = {0};
+        memcpy(buf, &text[(static_num - num) * BLOCK_SIZE], BLOCK_SIZE);
+        unsigned char *p = fs_head + i * BLOCK_SIZE;
+        memcpy(p, buf, BLOCK_SIZE);
+        num = num - 1;
+        if (num > 0) // 是否还有下一次循环
+        {
+            fat *fat_cur = fat1 + i;
+            if (fat_cur->id == END)  //需要申请索引块
+            {
+                int next = get_free(1);
+                fat_cur->id = next;
+                fat_cur = fat1 + next;
+                fat_cur->id = END;
+            }
+            i = (fat1 + i)->id;
+        }
+    }
+    //这时的i是刚写完的最后一个磁盘块，剩下的磁盘块可以free掉
+
+    if (fat1[i].id != END) {
+        int j = fat1[i].id;
+        fat1[i].id = END;
+        i = j;
+        while (fat1[i].id != END) {
+            int m = fat1[i].id;
+            fat1[i].id = FREE;
+            i = m;
+        }
+        fat1[i].id = FREE;
+    }
+
+    openfile_list[fd].open_fcb.length = length;
+    openfile_list[fd].fcb_state = 1;
+    return (strlen(input) - 1);
 }
 
 /**
  *
- * @todo Implement and debug for my_read().
  * @param args
  * @return
  * @author
  */
 int my_read(char **args) {
+    int i,  flag = 0;
+    int length;
+    int mode = 'a';
+    char path[PATHLENGTH];
+    char str[WRITE_SIZE];
+    fcb *file;
+
+    /**< Check for arguments count. */
+    for (i = 1; args[i] != NULL; i++) {
+        if (args[i][0] == '-') {
+            if (!strcmp(args[i], "-s")) {
+                mode = 's';
+            } else if (!strcmp(args[i], "-a")) {
+                mode = 'a';
+            } else {
+                fprintf(stderr, "read: wrong argument\n");
+                return 1;
+            }
+        } else {
+            flag += 1 << i;
+        }
+    }
+    if ((flag == 0) || (flag > 4) || i > 3) {
+        fprintf(stderr, "read: wrong argument\n");
+        return 1;
+    }
+
+    /**< Check if it's a file or folder. */
+    strcpy(path, args[flag >> 1]);
+    if ((file = find_fcb(path)) == NULL) {
+        fprintf(stderr, "read: File not exists\n");
+        return 1;
+    }
+    if (file->attribute == 0) {
+        fprintf(stderr, "read: cannot access a folder\n");
+        return 1;
+    }
+
+    memset(str, '\0', WRITE_SIZE);
+    /**< Check if it's open. */
+    for (i = 0; i < 10; i++) {
+        if (openfile_list[i].free == 0) {
+            continue;
+        }
+
+        if (!strcmp(file->filename, openfile_list[i].open_fcb.filename) &&
+            file->first == openfile_list[i].open_fcb.first) {
+            /**< File is open. */
+            if (mode == 'a') {
+                openfile_list[i].count = 0;
+                length = UINT16_MAX;
+            }
+            if (mode == 's') {
+                printf("Please input location: ");
+                scanf("%d", &openfile_list[i].count);
+                printf("Please input length: ");
+                scanf("%d", &length);
+            }
+            do_read(i, length, str);
+            fputs(str, stdout);
+            return 1;
+        }
+    }
+
+    fprintf(stderr, "read: file is not open\n");
     return 1;
 }
 
 /**
  *
- * @todo Debug for do_read().
  * @param fd
  * @param len
  * @param text
@@ -728,7 +911,53 @@ int my_read(char **args) {
  * @author
  */
 int do_read(int fd, int len, char *text) {
+    memset(text, '\0', BLOCK_SIZE * 2);
 
+    if (len <= 0) //想要读取0个字符
+    {
+        return 0;
+    }
+
+    fat *fat1 = (fat *) (fs_head + BLOCK_SIZE); //FAT1表
+    int location = 0;//text的写入位置
+    int length;
+    int count = openfile_list[fd].count; //读写指针位置
+    //排除了id出现end的情况
+    if ((openfile_list[fd].open_fcb.length - count) >= len) //可以读取的字符多于想要读取的字符
+    {
+        length = len;  //想要读取的字符
+    } else {
+        length = openfile_list[fd].open_fcb.length - count; //只能读取这些字符
+    }
+    while (length) //需要读取的字符串个数
+    {
+        char *buf = (char *) malloc(BLOCK_SIZE); //申请空闲缓冲区
+        int count = openfile_list[fd].count; //读写指针位置
+        int logic_block_num = count / BLOCK_SIZE;//逻辑块号（起始为0）
+        int off = count % BLOCK_SIZE;//块内偏移量
+        int physics_block_num = openfile_list[fd].open_fcb.first;//文件起始物理块号（引导块号为0）
+
+        for (int i = 0; i < logic_block_num; i++)  //物理块号
+        {
+            physics_block_num = (fat1 + physics_block_num)->id; //FAT第一项为0，若为1则physics_block_num-1
+        }
+        unsigned char *p = fs_head + BLOCK_SIZE * physics_block_num; //该物理块起始地址
+        memcpy(buf, p, BLOCK_SIZE);
+
+        if ((off + length) <= BLOCK_SIZE) {
+            memcpy(&text[location], &buf[off], length);
+            openfile_list[fd].count = openfile_list[fd].count + length;
+            location += length;  //下一次写的位置
+            length = length - length;  //lenght = 0 将退出循环
+        } else {
+            memcpy(&text[location], &buf[off], BLOCK_SIZE - off);
+            openfile_list[fd].count += BLOCK_SIZE - off;
+            location += BLOCK_SIZE - off;
+            length = length - BLOCK_SIZE - off; //还剩下的想要读取的字节数
+        }
+    }
+
+    return location;
 }
 
 /**
@@ -788,6 +1017,7 @@ int get_free(int count) {
  * @author Leslie Van
  */
 int set_free(unsigned short first, unsigned short length, int mode) {
+    fat *flag = (fat *) (fs_head + BLOCK_SIZE);
     fat *fat0 = (fat *) (fs_head + BLOCK_SIZE);
     fat *fat1 = (fat *) (fs_head + BLOCK_SIZE * 3);
     int i;
@@ -798,7 +1028,7 @@ int set_free(unsigned short first, unsigned short length, int mode) {
     if (mode == 1) {
         /**< Reclaim space. */
         while (fat0->id != END) {
-            offset = fat0->id;
+            offset = fat0->id - (fat0 - flag) / sizeof(fat);
             fat0->id = FREE;
             fat1->id = FREE;
             fat0 += offset;
@@ -837,8 +1067,7 @@ int set_free(unsigned short first, unsigned short length, int mode) {
  * @author Leslie Van
  */
 int set_fcb(fcb *f, const char *filename, const char *exname, unsigned char attr, unsigned short first,
-            unsigned long length,
-            char ffree) {
+            unsigned long length, char ffree) {
     time_t *now = (time_t *) malloc(sizeof(time_t));
     struct tm *timeinfo;
     time(now);
