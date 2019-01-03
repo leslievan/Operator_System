@@ -3,7 +3,7 @@
  * @brief   Definition in FAT16 file system.
  * @details Macro definitions, structs such as FCB and FAT, and some global variable.
  * @author  Leslie Van
- * @date    2018-12-19 to
+ * @date    2018-12-19 to 2019-1-3
  */
 
 #include "simplefs.h"
@@ -1272,46 +1272,45 @@ char *get_abspath(char *abspath, const char *relpath) {
     }
 
     char str[PATHLENGTH];
-    char *token;
+    char *token, *end;
     int i;
     ssize_t n;
 
-    for (i = 0; i < PATHLENGTH; i++) {
-        abspath[i] = '\0';
-    }
+    memset(abspath, '\0', PATHLENGTH);
+    abspath[0] = '/';
+    strcpy(abspath, current_dir);
 
     strcpy(str, relpath);
     token = strtok(str, DELIM);
 
-    /**< Process the first token. */
-    if (!strcmp(token, ".")) {
-        /**< Cur folder. */
-        if (current_dir[1] != '\0') {
-            strcpy(abspath, current_dir);
+    do {
+        if (!strcmp(token, ".")) {
+            continue;
         }
-    } else if (!strcmp(token, "..")) {
-        /**< Par folder. */
-        if (current_dir[1] != '\0') {
-            n = strlen(openfile_list[curdir].open_fcb.filename);
-            strncpy(abspath, current_dir, strlen(current_dir) - n);
-        }
-    } else {
-        strcpy(abspath, current_dir);
-        if (current_dir[1] != '\0') {
-            strcat(abspath, DELIM);
+        if (!strcmp(token, "..")) {
+            if (!strcmp(abspath, ROOT)) {
+                continue;
+            } else {
+                end = strrchr(abspath, '/');
+                if (end == abspath) {
+                    strcmp(abspath, ROOT);
+                    continue;
+                }
+                strncpy(abspath, abspath, end - abspath);
+                continue;
+            }
         }
         strcat(abspath, token);
-    }
-
-    /**< Process the other tokens. */
-    token = strtok(NULL, DELIM);
-    while (token != NULL) {
-        strcat(abspath, DELIM);
-        strcat(abspath, token);
-        token = strtok(NULL, DELIM);
-    }
+    } while ((token = strtok(NULL, DELIM)) != NULL);
 
     return abspath;
+}
+
+char *parpath(char *parpath, char *path) {
+    if (!strcmp(path, ROOT)) {
+        strcpy(parpath, ROOT);
+        return parpath;
+    }
 }
 
 /**

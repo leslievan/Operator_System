@@ -3,7 +3,7 @@
  * @brief   Setup in FAT16 file system.
  * @details Macro definitions, structs such as FCB and FAT, and some global variable.
  * @author  Leslie Van
- * @date    2018-12-19 to
+ * @date    2018-12-19 to 2019-1-3
  */
 
 #include <stdio.h>
@@ -154,6 +154,8 @@ fcb * fcb_cpy(fcb *dest, fcb *src);
 char * get_abspath(char *abspath, const char *relpath);
 
 int get_useropen();
+
+char *parpath(char *parpath, char *path);
 
 fcb *find_fcb(const char *path);
 
