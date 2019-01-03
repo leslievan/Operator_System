@@ -469,7 +469,7 @@ void do_ls(int first, char mode) {
                 printf("%s\n", fullname);
                 printf("%s", DEFAULT_COLOR);
             } else {
-                printf("%s", fullname);
+                printf("%s\n", fullname);
             }
             count++;
         }
