@@ -1294,11 +1294,12 @@ char *get_abspath(char *abspath, const char *relpath) {
                     strcpy(abspath, ROOT);
                     continue;
                 }
-                strncpy(abspath, abspath, end - abspath);
+                memset(end, '\0', 1);
+//                strncpy(abspath, abspath, end - abspath);
                 continue;
             }
         }
-        if (strcmp(current_dir, "/")) {
+        if (strcmp(abspath, "/")) {
             strcat(abspath, DELIM);
         }
         strcat(abspath, token);
