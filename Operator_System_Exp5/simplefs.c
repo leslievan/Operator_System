@@ -1273,8 +1273,6 @@ char *get_abspath(char *abspath, const char *relpath) {
 
     char str[PATHLENGTH];
     char *token, *end;
-    int i;
-    ssize_t n;
 
     memset(abspath, '\0', PATHLENGTH);
     abspath[0] = '/';
@@ -1293,24 +1291,20 @@ char *get_abspath(char *abspath, const char *relpath) {
             } else {
                 end = strrchr(abspath, '/');
                 if (end == abspath) {
-                    strcmp(abspath, ROOT);
+                    strcpy(abspath, ROOT);
                     continue;
                 }
                 strncpy(abspath, abspath, end - abspath);
                 continue;
             }
         }
+        if (strcmp(current_dir, "/")) {
+            strcat(abspath, DELIM);
+        }
         strcat(abspath, token);
     } while ((token = strtok(NULL, DELIM)) != NULL);
 
     return abspath;
-}
-
-char *parpath(char *parpath, char *path) {
-    if (!strcmp(path, ROOT)) {
-        strcpy(parpath, ROOT);
-        return parpath;
-    }
 }
 
 /**

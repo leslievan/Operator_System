@@ -155,8 +155,6 @@ char * get_abspath(char *abspath, const char *relpath);
 
 int get_useropen();
 
-char *parpath(char *parpath, char *path);
-
 fcb *find_fcb(const char *path);
 
 fcb *find_fcb_r(char *token, int root);
