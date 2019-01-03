@@ -23,7 +23,7 @@
 #define ROOT            "/"     /**< Root directory name.*/
 #define ROOT_BLOCK_NUM  2       /**< Block of the initial root directory. */
 #define MAX_OPENFILE    10      /**< Max files to open at the same time. */
-#define NAMELENGTH      24
+#define NAMELENGTH      32
 #define PATHLENGTH      128
 #define DELIM           "/"
 #define FOLDER_COLOR    "\e[1;32m"

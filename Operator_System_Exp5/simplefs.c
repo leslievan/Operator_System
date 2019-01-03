@@ -108,7 +108,7 @@ int do_format(void) {
     strcpy(init_block->information,
            "Disk Size = 1MB, Block Size = 1KB, Block0 in 0, FAT0/1 in 1/3, Root Directory in 5");
     init_block->root = 5;
-    init_block->start_block = init_block + BLOCK_SIZE * 7;
+    init_block->start_block = (unsigned char *) (init_block + BLOCK_SIZE * 7);
     ptr += BLOCK_SIZE;
 
     /**< Init FAT0/1. */
@@ -320,7 +320,7 @@ int my_rmdir(char **args) {
         }
 
         if (!strcmp(args[i], "/")) {
-            fprintf(stderr, "rmdir:  Permission denied\n", args[i]);
+            fprintf(stderr, "rmdir:  Permission denied\n");
             return 1;
         }
 
@@ -563,9 +563,13 @@ int do_create(const char *parpath, const char *filename) {
     strcpy(fullname, filename);
     set_free(first, 1, 0);
     token = strtok(fullname, ".");
-    strcpy(fname, token);
+    strncpy(fname, token, 8);
     token = strtok(NULL, ".");
-    strcpy(exname, token);
+    if (token != NULL) {
+        strncpy(exname, token, 3);
+    } else {
+        strncpy(exname, "d", 2);
+    }
 
     /**< Set fcb. */
     set_fcb(dir, fname, exname, 1, first, 0, 1);
@@ -1185,8 +1189,8 @@ int set_fcb(fcb *f, const char *filename, const char *exname, unsigned char attr
 
     memset(f->filename, 0, 8);
     memset(f->exname, 0, 3);
-    strncpy(f->filename, filename, 8);
-    strncpy(f->exname, exname, 3);
+    strncpy(f->filename, filename, 7);
+    strncpy(f->exname, exname, 2);
     f->attribute = attr;
     f->time = get_time(timeinfo);
     f->date = get_date(timeinfo);
