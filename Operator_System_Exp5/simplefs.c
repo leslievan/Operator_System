@@ -38,26 +38,10 @@ int start_sys(void) {
     openfile_list[0].free = 1;
     curdir = 0;
 
-    if (find_fcb("/tmp.txt") != NULL) {
-        fcb_cpy(&openfile_list[1].open_fcb, find_fcb("/tmp.txt"));
-        strcpy(openfile_list[1].dir, ROOT);
-        openfile_list[1].count = 0;
-        openfile_list[1].fcb_state = 0;
-        openfile_list[1].free = 1;
-    }
-
-    if (find_fcb("/fold") != NULL) {
-        fcb_cpy(&openfile_list[2].open_fcb, find_fcb("/fold"));
-        strcpy(openfile_list[2].dir, "/fold");
-        openfile_list[2].count = 0;
-        openfile_list[2].fcb_state = 0;
-        openfile_list[2].free = 1;
-    }
-
     /**< Init the other openfile entry. */
     fcb *empty = (fcb *) malloc(sizeof(fcb));
     set_fcb(empty, "\0", "\0", 0, 0, 0, 0);
-    for (i = 3; i < MAX_OPENFILE; i++) {
+    for (i = 1; i < MAX_OPENFILE; i++) {
         fcb_cpy(&openfile_list[i].open_fcb, empty);
         strcpy(openfile_list[i].dir, "\0");
         openfile_list[i].free = 0;
@@ -146,19 +130,7 @@ int do_format(void) {
     set_fcb(root, "..", "di", 0, first, BLOCK_SIZE * 2, 1);
     root++;
 
-    /**< Create test file and test folder.(delete after test) */
-    second = get_free(1);
-    set_free(second, 1, 0);
-    set_fcb(root, "tmp", "txt", 1, second, 16, 1);
-    root++;
-    second = get_free(1);
-    set_free(second, 1, 0);
-    set_fcb(root, "fold", "di", 0, second, BLOCK_SIZE, 1);
-    init_folder(first, second);
-    root++;
-
-    // for (i = 2; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
-    for (i = 4; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
+    for (i = 2; i < BLOCK_SIZE * 2 / sizeof(fcb); i++, root++) {
         root->free = 0;
     }
 
@@ -170,13 +142,14 @@ int do_format(void) {
 }
 
 /**
- *
- * @author
+ * Change current directory.
  * @param args
+ * @return Always 1.
  */
 int my_cd(char **args) {
     int i;
     int fd;
+    char abspath[PATHLENGTH];
     fcb *dir;
 
     /**< Check argument count. */
@@ -187,14 +160,20 @@ int my_cd(char **args) {
     }
 
     /**< Check argument value. */
-    dir = find_fcb(args[1]);
+    memset(abspath, '\0', PATHLENGTH);
+    get_abspath(abspath, args[1]);
+    dir = find_fcb(abspath);
     if (dir == NULL || dir->attribute == 1) {
         fprintf(stderr, "cd: No such folder\n");
         return 1;
     }
 
     /**< Check if the folder fcb exist in openfile_list. */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < MAX_OPENFILE; i++) {
+        if (openfile_list[i].free == 0) {
+            continue;
+        }
+
         if (!strcmp(dir->filename, openfile_list[i].open_fcb.filename) &&
             dir->first == openfile_list[i].open_fcb.first) {
             /**< Folder is open. */
@@ -203,25 +182,33 @@ int my_cd(char **args) {
         }
     }
 
-    /**< @todo With do_open() implement, check and change it here. */
     /**< Folder is close, open it and change current directory. */
-    if ((fd = do_open(args[1])) > 0) {
+    if ((fd = do_open(abspath)) > 0) {
         do_chdir(fd);
     }
 
     return 1;
 }
 
+/**
+ * Just do change directory action.
+ * @param fd File descriptor of directory.
+ */
 void do_chdir(int fd) {
     curdir = fd;
     memset(current_dir, '\0', sizeof(current_dir));
     strcpy(current_dir, openfile_list[curdir].dir);
 }
 
+/**
+ * Display current directory.
+ * @param args No argument.
+ * @return Always 1.
+ */
 int my_pwd(char **args) {
     /**< Check argument count. */
     if (args[1] != NULL) {
-        fprintf(stderr, "cd: too many arguments\n");
+        fprintf(stderr, "pwd: too many arguments\n");
         return 1;
     }
 
@@ -230,9 +217,11 @@ int my_pwd(char **args) {
 }
 
 /**
- *
- * @author
- * @param args
+ * Create one or many directory once.
+ * Provide function to create two or more directory once.
+ * If par folder not exists, print error, others will continue.
+ * @param args Folder names.
+ * @return Always 1.
  */
 int my_mkdir(char **args) {
     int i;
@@ -274,8 +263,10 @@ int my_mkdir(char **args) {
 }
 
 /**
- *
- * @return
+ * Just do create directory.
+ * @param parpath Par folder of the folder you want to create.
+ * @param dirname Folder name you want to create.
+ * @return Error with -1, else return 0.
  */
 int do_mkdir(const char *parpath, const char *dirname) {
     int second = get_free(1);
@@ -304,14 +295,12 @@ int do_mkdir(const char *parpath, const char *dirname) {
     /**< Set fcb and init folder. */
     set_fcb(dir, dirname, "di", 0, second, BLOCK_SIZE, 1);
     init_folder(first, second);
-
     return 0;
 }
 
 /**
- *
- * @author
- * @param args
+ * Remove folder one or more once.
+ * @param args Folders name you want remove.
  */
 int my_rmdir(char **args) {
     int i, j;
@@ -347,7 +336,7 @@ int my_rmdir(char **args) {
         }
 
         /**< Check if the folder fcb exist in openfile_list. */
-        for (j = 0; j < 10; j++) {
+        for (j = 0; j < MAX_OPENFILE; j++) {
             if (openfile_list[j].free == 0) {
                 continue;
             }
@@ -366,8 +355,7 @@ int my_rmdir(char **args) {
 }
 
 /**
- *
- * @return
+ * Just do remove directory.
  */
 void do_rmdir(fcb *dir) {
     int first = dir->first;
@@ -380,8 +368,9 @@ void do_rmdir(fcb *dir) {
 }
 
 /**
- *
- * @author
+ * Show all thing in folder.
+ * @param args Empty to show current folder. '-l' to show by a long format. 'path' to show a specific folder.
+ * @return Always 1.
  */
 int my_ls(char **args) {
     int first = openfile_list[curdir].open_fcb.first;
@@ -430,6 +419,11 @@ int my_ls(char **args) {
     return 1;
 }
 
+/**
+ * Just do ls.
+ * @param first First block of folder you want to show.
+ * @param mode 'n' to normal format, and 'l' to long format.
+ */
 void do_ls(int first, char mode) {
     int i, count, length = BLOCK_SIZE;
     char fullname[NAMELENGTH], date[16], time[16];
@@ -475,7 +469,7 @@ void do_ls(int first, char mode) {
                 printf("%s\n", fullname);
                 printf("%s", DEFAULT_COLOR);
             } else {
-                printf("%s\n", fullname);
+                printf("%s", fullname);
             }
             count++;
         }
@@ -484,11 +478,9 @@ void do_ls(int first, char mode) {
 }
 
 /**
- *
- * @author
- * @param args
- * @return
- * @author
+ * Create one or more files once.
+ * @param args Filename you want to create.
+ * @return Always 1.
  */
 int my_create(char **args) {
     int i;
@@ -532,6 +524,12 @@ int my_create(char **args) {
     return 1;
 }
 
+/**
+ * Just do create file.
+ * @param parpath File par folder.
+ * @param filename File name.
+ * @return Error with -1, else return 0.
+ */
 int do_create(const char *parpath, const char *filename) {
     char fullname[NAMELENGTH], fname[16], exname[8];
     char *token;
@@ -576,10 +574,9 @@ int do_create(const char *parpath, const char *filename) {
 }
 
 /**
- *
- * @author
- * @param args
- * @author
+ * Remove files.
+ * @param args Filename you want to remove.
+ * @return Always return 1.
  */
 int my_rm(char **args) {
     int i, j;
@@ -604,8 +601,8 @@ int my_rm(char **args) {
             return 1;
         }
 
-        /**< Check if the file fcb exist in openfile_list. */
-        for (j = 0; j < 10; j++) {
+        /**< Check if the file exist in openfile_list. */
+        for (j = 0; j < MAX_OPENFILE; j++) {
             if (openfile_list[j].free == 0) {
                 continue;
             }
@@ -624,7 +621,10 @@ int my_rm(char **args) {
     return 1;
 }
 
-
+/**
+ * Just do remove file.
+ * @param file FCB pointer which file you want to remove.
+ */
 void do_rm(fcb *file) {
     int first = file->first;
 
@@ -633,52 +633,157 @@ void do_rm(fcb *file) {
 }
 
 /**
- * @todo Implement for my_open().
- * @param args
- * @return
+ * Open file.
+ * @param args '-l' to show all files opened. 'path' to open file.
+ * @return Always 1.
  */
 int my_open(char **args) {
+    int i, j;
+    fcb *file;
+    char path[PATHLENGTH];
+
+    /**< Check argument count. */
+    if (args[1] == NULL) {
+        fprintf(stderr, "open: missing operand\n");
+        return 1;
+    }
+    if (args[1][0] == '-') {
+        if (!strcmp(args[1], "-l")) {
+            printf("fd filename exname state path\n");
+            for (i = 0; i < MAX_OPENFILE; i++) {
+                if (openfile_list[i].free == 0) {
+                    continue;
+                }
+
+                printf("%2d %8s %-6s %-5d %s\n", i, openfile_list[i].open_fcb.filename,
+                       openfile_list[i].open_fcb.exname,
+                       openfile_list[i].fcb_state, openfile_list[i].dir);
+            }
+            return 1;
+        } else {
+            fprintf(stderr, "open: wrong argument\n");
+            return 1;
+        }
+    }
+
+    /**< Do open. */
+    for (i = 1; args[i] != NULL; i++) {
+        file = find_fcb(args[i]);
+        if (file == NULL) {
+            fprintf(stderr, "open: cannot open %s: No such file or folder\n", args[i]);
+            return 1;
+        }
+
+        /**< Check if the file exist in openfile_list. */
+        for (j = 0; j < MAX_OPENFILE; j++) {
+            if (openfile_list[j].free == 0) {
+                continue;
+            }
+
+            if (!strcmp(file->filename, openfile_list[j].open_fcb.filename) &&
+                file->first == openfile_list[j].open_fcb.first) {
+                /**< file is open. */
+                fprintf(stderr, "open: cannot open %s: File or folder is open\n", args[i]);
+                continue;
+            }
+        }
+
+        do_open(get_abspath(path, args[i]));
+    }
     return 1;
 }
 
 /**
- *
- * @todo Implement for do_open().
- * @param filename
- * @return
- * @author
+ * Just do open file.
+ * @param path Abspath of file you want to open..
+ * @return Error with -1, else return fd;
  */
-int do_open(char *filename) {
+int do_open(char *path) {
+    int fd = get_useropen();
+    fcb *file = find_fcb(path);
 
+    if (fd == -1) {
+        fprintf(stderr, "open: cannot open file, no more useropen entry\n");
+        return -1;
+    }
+    fcb_cpy(&openfile_list[fd].open_fcb, file);
+    openfile_list[fd].free = 1;
+    openfile_list[fd].count = 0;
+    memset(openfile_list[fd].dir, '\0', 80);
+    strcpy(openfile_list[fd].dir, path);
+
+    return fd;
 }
 
 /**
- *
- * @todo Implement for my_close().
- * @param args
- * @return
+ * Close file and save it.
+ * @param args '-a' to close all file. 'path' to close file.
+ * @return Always 1.
  */
 int my_close(char **args) {
+    int i, j;
+    fcb *file;
+
+    /**< Check argument count. */
+    if (args[1] == NULL) {
+        fprintf(stderr, "close: missing operand\n");
+        return 1;
+    }
+    if (args[1][0] == '-') {
+        if (!strcmp(args[1], "-a")) {
+            for (i = 0; i < MAX_OPENFILE; i++) {
+                if (i == curdir) {
+                    continue;
+                }
+                openfile_list[i].free = 0;
+            }
+            return 1;
+        } else {
+            fprintf(stderr, "close: wrong argument\n");
+            return 1;
+        }
+    }
+
+
+    /**< Do close. */
+    for (i = 1; args[i] != NULL; i++) {
+        file = find_fcb(args[i]);
+        if (file == NULL) {
+            fprintf(stderr, "close: cannot close %s: No such file or folder\n", args[i]);
+            return 1;
+        }
+
+        /**< Check if the file exist in openfile_list. */
+        for (j = 0; j < MAX_OPENFILE; j++) {
+            if (openfile_list[j].free == 0) {
+                continue;
+            }
+
+            if (!strcmp(file->filename, openfile_list[j].open_fcb.filename) &&
+                file->first == openfile_list[j].open_fcb.first) {
+                /**< File is open. */
+                do_close(j);
+            }
+        }
+    }
     return 1;
 }
 
 /**
- *
- * @todo Implement for do_close().
- * @brief
- * @param fd
- * @author
+ * Just do close file.
+ * @param fd File descriptor.
  */
-int do_close(int fd) {
-
+void do_close(int fd) {
+    if (openfile_list[fd].fcb_state == 1) {
+        fcb_cpy(find_fcb(openfile_list[fd].dir), &openfile_list[fd].open_fcb);
+    }
+    openfile_list[fd].free = 0;
 }
 
 /**
  *
- * @brief
  * @param args
  * @return
- * @author
  */
 int my_write(char **args) {
     int i, j = 0, flag = 0;
@@ -723,7 +828,7 @@ int my_write(char **args) {
 
     memset(str, '\0', WRITE_SIZE);
     /**< Check if it's open. */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < MAX_OPENFILE; i++) {
         if (openfile_list[i].free == 0) {
             continue;
         }
@@ -741,8 +846,7 @@ int my_write(char **args) {
                     j++;
                 }
             }
-            str[j] = '\0';
-            printf("%s", str);
+
             do_write(i, str, j + 1, mode);
             return 1;
         }
@@ -831,10 +935,9 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
  *
  * @param args
  * @return
- * @author
  */
 int my_read(char **args) {
-    int i,  flag = 0;
+    int i, flag = 0;
     int length;
     int mode = 'a';
     char path[PATHLENGTH];
@@ -874,7 +977,7 @@ int my_read(char **args) {
 
     memset(str, '\0', WRITE_SIZE);
     /**< Check if it's open. */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < MAX_OPENFILE; i++) {
         if (openfile_list[i].free == 0) {
             continue;
         }
@@ -891,6 +994,7 @@ int my_read(char **args) {
                 scanf("%d", &openfile_list[i].count);
                 printf("Please input length: ");
                 scanf("%d", &length);
+                printf("-----------------------");
             }
             do_read(i, length, str);
             fputs(str, stdout);
@@ -911,7 +1015,7 @@ int my_read(char **args) {
  * @author
  */
 int do_read(int fd, int len, char *text) {
-    memset(text, '\0', BLOCK_SIZE * 2);
+    memset(text, '\0', BLOCK_SIZE * 20);
 
     if (len <= 0) //想要读取0个字符
     {
@@ -965,7 +1069,13 @@ int do_read(int fd, int len, char *text) {
  * @author
  */
 int my_exit_sys(void) {
+    int i;
     FILE *fp;
+
+    for (i = 0; i < MAX_OPENFILE; i++) {
+        do_close(i);
+    }
+
     fp = fopen(SYS_PATH, "w");
     fwrite(fs_head, DISK_SIZE, 1, fp);
     free(fs_head);
@@ -983,15 +1093,15 @@ int get_free(int count) {
     unsigned char *ptr = fs_head;
     fat *fat0 = (fat *) (ptr + BLOCK_SIZE);
     int i, j, flag = 0;
-    int fat[1024];
+    int fat[BLOCK_NUM];
 
     /** Copy FAT. */
-    for (i = 0; i < 1024; i++, fat0++) {
+    for (i = 0; i < BLOCK_NUM; i++, fat0++) {
         fat[i] = fat0->id;
     }
 
     /** Find a continuous space. */
-    for (i = 0; i < 1024 - count; i++) {
+    for (i = 0; i < BLOCK_NUM - count; i++) {
         for (j = i; j < i + count; j++) {
             if (fat[j] > 0) {
                 flag = 1;
@@ -1092,7 +1202,6 @@ int set_fcb(fcb *f, const char *filename, const char *exname, unsigned char attr
  * Translate ISO time to short time.
  * @param timeinfo Current time structure.
  * @return Time number after translation.
- * @author Leslie Van
  */
 unsigned short get_time(struct tm *timeinfo) {
     int hour, min, sec;
@@ -1110,7 +1219,6 @@ unsigned short get_time(struct tm *timeinfo) {
  * Translate ISO date to short date.
  * @param timeinfo local
  * @return Date number after translation.
- * @author Leslie Van
  */
 unsigned short get_date(struct tm *timeinfo) {
     int year, mon, day;
@@ -1128,8 +1236,12 @@ unsigned short get_date(struct tm *timeinfo) {
  * Copy a fcb.
  * @param dest Destination fcb.
  * @param src Source fcb.
+ * @return Destination fcb pointer.
  */
-int fcb_cpy(fcb *dest, fcb *src) {
+fcb *fcb_cpy(fcb *dest, fcb *src) {
+    memset(dest->filename, '\0', 8);
+    memset(dest->exname, '\0', 3);
+
     strcpy(dest->filename, src->filename);
     strcpy(dest->exname, src->exname);
     dest->attribute = src->attribute;
@@ -1139,16 +1251,16 @@ int fcb_cpy(fcb *dest, fcb *src) {
     dest->length = src->length;
     dest->free = src->free;
 
-    return 0;
+    return dest;
 }
 
 /**
  * Translate relative path to absolute path
  * @param abspath Absolute path.
  * @param relpath Relative path.
- * @return 0.
+ * @return Absolute path.
  */
-int get_abspath(char *abspath, const char *relpath) {
+char *get_abspath(char *abspath, const char *relpath) {
     /**< If relpath is abspath. */
     if (!strcmp(relpath, DELIM) || relpath[0] == '/') {
         strcpy(abspath, relpath);
@@ -1195,13 +1307,13 @@ int get_abspath(char *abspath, const char *relpath) {
         token = strtok(NULL, DELIM);
     }
 
-    return 0;
+    return abspath;
 }
 
 /**
- * Find fcb by abspath
- * @param path
- * @return
+ * Find fcb by abspath.
+ * @param path File path.
+ * @return File fcb pointer.
  */
 fcb *find_fcb(const char *path) {
     char abspath[PATHLENGTH];
@@ -1261,7 +1373,11 @@ int get_useropen() {
     return -1;
 }
 
-/**  */
+/**
+ * Init a folder.
+ * @param first Parent folder block num.
+ * @param second Current folder block num.
+ */
 void init_folder(int first, int second) {
     int i;
     fcb *par = (fcb *) (fs_head + BLOCK_SIZE * first);
@@ -1291,6 +1407,12 @@ void get_fullname(char *fullname, fcb *fcb1) {
     }
 }
 
+/**
+ * Translate unsigned short number to date string.
+ * @param sdate Date to string.
+ * @param date A number to represent date.
+ * @return sdate.
+ */
 char *trans_date(char *sdate, unsigned short date) {
     int year, month, day;
     memset(sdate, '\0', 16);
@@ -1302,6 +1424,12 @@ char *trans_date(char *sdate, unsigned short date) {
     return sdate;
 }
 
+/**
+ * Translate unsigned short number to time string.
+ * @param stime Time to string.
+ * @param time A number to represent time.
+ * @return stime.
+ */
 char *trans_time(char *stime, unsigned short time) {
     int hour, min, sec;
     memset(stime, '\0', 16);

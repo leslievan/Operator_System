@@ -160,10 +160,10 @@ void csh_loop(void)
     char *line;
     char **args;
     int status;
-    int te;
 
     do {
-        printf("%s > ", current_dir);
+        printf("\n\e[1mleslie\e[0m@leslie-PC \e[1m%s\e[0m\n", current_dir);
+        printf("> \e[032m$\e[0m ");
         line = csh_read_line();
         args = csh_split_line(line);
         status = csh_execute(args);

@@ -121,11 +121,11 @@ void do_rm(fcb *file);
 
 int my_open(char **args);
 
-int do_open(char *filename);
+int do_open(char *path);
 
 int my_close(char **args);
 
-int do_close(int fd);
+void do_close(int fd);
 
 int my_write(char **args);
 
@@ -149,9 +149,9 @@ unsigned short get_time(struct tm *timeinfo);
 
 unsigned short get_date(struct tm *timeinfo);
 
-int fcb_cpy(fcb *dest, fcb *src);
+fcb * fcb_cpy(fcb *dest, fcb *src);
 
-int get_abspath(char *abspath, const char *relpath);
+char * get_abspath(char *abspath, const char *relpath);
 
 int get_useropen();
 
