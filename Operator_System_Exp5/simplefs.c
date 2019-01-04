@@ -785,8 +785,8 @@ void do_close(int fd) {
 }
 
 /**
- *
- * @param args
+ * Write file.
+ * @param args [-a|-c|-w] append|cover|write, 'path' path of file.
  * @return
  */
 int my_write(char **args) {
@@ -840,6 +840,11 @@ int my_write(char **args) {
         if (!strcmp(file->filename, openfile_list[i].open_fcb.filename) &&
             file->first == openfile_list[i].open_fcb.first) {
             /**< File is open. */
+            if (mode == 'c') {
+                printf("Please input location: ");
+                scanf("%d", &openfile_list[i].count);
+            }
+            getchar();
             while (1) {
                 for (; (str[j] = getchar()) != '\n'; j++);
                 j++;
@@ -851,7 +856,12 @@ int my_write(char **args) {
                 }
             }
 
-            do_write(i, str, j + 1, mode);
+            if (mode == 'c') {
+                do_write(i, str, j - 1, mode);
+            } else {
+                do_write(i, str, j + 1, mode);
+            }
+
             return 1;
         }
     }
@@ -861,9 +871,9 @@ int my_write(char **args) {
 }
 
 /**
- * @param fd
- * @param wstyle
- * @return
+ * @param fd File descriptor.
+ * @param wstyle Write style.
+ * @return Bytes write
  */
 int do_write(int fd, char *content, size_t len, int wstyle) {
     //fat1表
@@ -885,11 +895,14 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
     //文件处理：截断写、覆盖写、追加写
     if (wstyle == 'w') {
         memset(text, 0, WRITE_SIZE);
-        strncpy(text, input, len);
+        memcpy(text, input, len);
+//        strncpy(text, input, len);
     } else if (wstyle == 'c') {
-        strncpy(&text[openfile_list[fd].count], input, len);
+        memcpy(text + openfile_list[fd].count, input, len);
+//        strncpy(&text[openfile_list[fd].count], input, len);
     } else if (wstyle == 'a') {
-        strncpy(&text[openfile_list[fd].open_fcb.length], input, len);
+        memcpy(text + openfile_list[fd].count, input, len);
+//        strncpy(&text[openfile_list[fd].open_fcb.length], input, len);
     }
     //写入文件系统
     int length = strlen(text); //需要写入的长度
@@ -897,7 +910,6 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
     int static_num = num;
 
     while (num) {
-
         char buf[BLOCK_SIZE] = {0};
         memcpy(buf, &text[(static_num - num) * BLOCK_SIZE], BLOCK_SIZE);
         unsigned char *p = fs_head + i * BLOCK_SIZE;
@@ -936,9 +948,9 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
 }
 
 /**
- *
- * @param args
- * @return
+ * Read file.
+ * @param args [-s|-a] select|all, 'path' path of file.
+ * @return Bytes read.
  */
 int my_read(char **args) {
     int i, flag = 0;
@@ -1011,12 +1023,10 @@ int my_read(char **args) {
 }
 
 /**
- *
- * @param fd
- * @param len
- * @param text
+ * @param fd File descriptor.
+ * @param len Length of text.
+ * @param text Read file into text.
  * @return
- * @author
  */
 int do_read(int fd, int len, char *text) {
     memset(text, '\0', BLOCK_SIZE * 20);
@@ -1295,7 +1305,6 @@ char *get_abspath(char *abspath, const char *relpath) {
                     continue;
                 }
                 memset(end, '\0', 1);
-//                strncpy(abspath, abspath, end - abspath);
                 continue;
             }
         }
