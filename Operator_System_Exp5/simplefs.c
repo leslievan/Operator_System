@@ -254,6 +254,7 @@ int my_mkdir(char **args) {
         }
         if (find_fcb(path) != NULL) {
             fprintf(stderr, "create: cannot create \'%s\': Folder or file exists\n", args[i]);
+            continue;
         }
 
         do_mkdir(parpath, dirname);
@@ -365,6 +366,8 @@ void do_rmdir(fcb *dir) {
     dir->free = 0;
     dir++;
     dir->free = 0;
+
+    set_free(first, 1, 1);
 }
 
 /**
@@ -516,6 +519,7 @@ int my_create(char **args) {
         }
         if (find_fcb(path) != NULL) {
             fprintf(stderr, "create: cannot create \'%s\': Folder or file exists\n", args[i]);
+            continue;
         }
 
         do_create(parpath, filename);
@@ -561,7 +565,6 @@ int do_create(const char *parpath, const char *filename) {
     memset(fname, '\0', 8);
     memset(exname, '\0', 3);
     strcpy(fullname, filename);
-    set_free(first, 1, 0);
     token = strtok(fullname, ".");
     strncpy(fname, token, 8);
     token = strtok(NULL, ".");
@@ -843,8 +846,8 @@ int my_write(char **args) {
             if (mode == 'c') {
                 printf("Please input location: ");
                 scanf("%d", &openfile_list[i].count);
+                getchar();
             }
-            getchar();
             while (1) {
                 for (; (str[j] = getchar()) != '\n'; j++);
                 j++;
@@ -879,6 +882,7 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
     //fat1表
 
     fat *fat1 = (fat *) (fs_head + BLOCK_SIZE);
+    fat *fat2 = (fat *) (fs_head + 3*BLOCK_SIZE);
 
     //定义输入字符串数组，初始化
     char text[WRITE_SIZE] = {0};
@@ -918,6 +922,7 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
         if (num > 0) // 是否还有下一次循环
         {
             fat *fat_cur = fat1 + i;
+
             if (fat_cur->id == END)  //需要申请索引块
             {
                 int next = get_free(1);
@@ -942,9 +947,12 @@ int do_write(int fd, char *content, size_t len, int wstyle) {
         fat1[i].id = FREE;
     }
 
+    memcpy(fat2, fat1, 2*BLOCK_SIZE);
     openfile_list[fd].open_fcb.length = length;
     openfile_list[fd].fcb_state = 1;
-    return (strlen(input) - 1);
+    return (strlen(input));
+
+
 }
 
 /**
