@@ -9,9 +9,9 @@ keywords: ["杭电","杭州电子科技大学","HDU","操作系统实验","操�
 
 **实验列表**
 
-- [x] [Lab1-Linux内核编译及添加系统调用](/2019/01/os-lab1/)
-- [x] [Lab2-Linux内核模块编程](/2019/03/os-lab2/)
-- [x] [Lab3-Linux进程管理（二）管道通信](/2019/04/os-lab-3-2/)
+- [x] [Lab1-Linux内核编译及添加系统调用](https://imwjc.xyz/2019/01/os-lab1/)
+- [x] [Lab2-Linux内核模块编程](https://imwjc.xyz/2019/03/os-lab2/)
+- [x] [Lab3-Linux进程管理（二）管道通信](https://imwjc.xyz/2019/04/os-lab-3-2/)
 - [ ] Lab3-Linux进程管理（三）消息队列
 - [ ] Lab3-Linux进程管理（四）共享内存
 - [ ] Lab5-Linux文件系统
