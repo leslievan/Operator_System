@@ -1,11 +1,8 @@
 # HDU 操作系统实验（待续）
 
-categories: ["Project"]
-
-tags: ["OS", "Lab", "HDU", "project"]
-
-keywords: ["杭电","杭州电子科技大学","HDU","操作系统实验","操作系统","实验","Linux","内核编译","进程管理"]
-
+- categories: ["Project"]
+- tags: ["OS", "Lab", "HDU", "project"]
+- keywords: ["杭电","杭州电子科技大学","HDU","操作系统实验","操作系统","实验","Linux","内核编译","进程管理"]
 
 **实验列表**
 
