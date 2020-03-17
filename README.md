@@ -14,7 +14,7 @@
 - [x] [Lab3-Linux进程管理（二）管道通信](https://imwjc.xyz/2019/04/os-lab-3-2/)
 - [x] Lab3-Linux进程管理（三）消息队列
 - [x] Lab3-Linux进程管理（四）共享内存
-- [x] Lab5-Linux文件系统
+- [x] [Lab5-Linux文件系统](https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab5)
 
 <!--more-->
 
