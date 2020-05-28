@@ -32,6 +32,7 @@ void *sender1() {
         CHECK(0 <= msgsnd(mq, (void*)&buf, MAX_SIZE, 0));
         V(full);
         V(w_mutex);
+        printf("\n");
      } while (strncmp(buf.buffer, MSG_STOP, strlen(MSG_STOP)));
 
     /* wait for response */
@@ -70,6 +71,7 @@ void *sender2() {
         CHECK(0 <= msgsnd(mq, (void *) &buf, MAX_SIZE, 0));
         V(full);
         V(w_mutex);
+        printf("\n");
      } while (strncmp(buf.buffer, MSG_STOP, strlen(MSG_STOP)));
 
     /* wait for response */
