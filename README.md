@@ -28,7 +28,7 @@
 >
 > 源码地址：<https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab1>
 
-[阅读更多](https://imwjc.xyz/2019/01/os-lab1)
+[阅读更多](https://lsvm.xyz/2019/01/os-lab1/)
 
 ## HDU-OS-Lab2-Linux内核模块编程
 
@@ -38,7 +38,7 @@ Linux内核采用了整体结构，上一个实验体会了编译内核时间的
 >
 > 源码地址：<https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab2>
 
-[阅读更多](https://imwjc.xyz/2019/03/os-lab2)
+[阅读更多](https://lsvm.xyz/2019/03/os-lab2)
 
 ## HDU-OS-Lab3-Linux进程管理（二）管道通信
 
@@ -46,4 +46,4 @@ Linux内核采用了整体结构，上一个实验体会了编译内核时间的
 
 > 源码地址：<https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab3/Operator_System_Exp3_2>
 
-[阅读更多](https://imwjc.xyz/2019/04/os-lab-3-2)
+[阅读更多](https://lsvm.xyz/2019/04/os-lab-3-2)
