@@ -9,9 +9,9 @@
 
 **实验列表**
 
-- [x] [Lab1-Linux内核编译及添加系统调用](https://imwjc.xyz/2019/01/os-lab1/)
-- [x] [Lab2-Linux内核模块编程](https://imwjc.xyz/2019/03/os-lab2/)
-- [x] [Lab3-Linux进程管理（二）管道通信](https://imwjc.xyz/2019/04/os-lab-3-2/)
+- [x] [Lab1-Linux内核编译及添加系统调用](https://lsvm.xyz/2019/01/os-lab1/)
+- [x] [Lab2-Linux内核模块编程](https://lsvm.xyz/2019/03/os-lab2/)
+- [x] [Lab3-Linux进程管理（二）管道通信](https://lsvm.xyz/2019/04/os-lab-3-2/)
 - [x] [Lab3-Linux进程管理（三）消息队列](https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab3)
 - [x] [Lab3-Linux进程管理（四）共享内存](https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab5)
 - [x] [Lab5-Linux文件系统](https://github.com/leslievan/Operator_System/tree/master/Operator_System_Lab5)
